@@ -7,6 +7,8 @@ import sys
 class Client:
 
     def _init_(self):
+
+        # Initializing the Square parameters
         self.name = "None"
         self.port = 13117
         self.host = ''
@@ -17,7 +19,7 @@ class Client:
         self.stopTheGame = False
         self.serverConnected = 0
 
-        # initializing the UDP Socket
+        # Initializing the UDP Socket
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -26,36 +28,40 @@ class Client:
             sys.exit()
         self.udpSocket.bind((self.host, self.port))
 
-        # initializing the TCP Socket
+        # Initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(family=socket.AF_INET, Type=socket.SOCK_STREAM)
         except socket.error:
             print("Failed to create server TCP socket")
             sys.exit()
 
-    def startClient(self):
+    def startClient(self):  # First function to run on the server side
+
         print("Client started, listening for offer requests...")
 
         while self.serverConnected < 1:
-            msgFromServer, serverInfo = self.udpSocket.recvfrom(2048)
+            msgFromServer, serverInfo = self.udpSocket.recvfrom(2048)  # wait for broadcast message from a Server
+
+            # Extract the data from the ServerMsg
             self.serverIP = serverInfo[0]
             magicCookie = hex(int(msgFromServer.hex()[:8], 16))
             messageType = msgFromServer.hex()[9:10]
             self.serverPort = int(msgFromServer.hex()[10:], 16)
 
-
-            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):  # TODO: need to understand if needed or not
+            # Verify all the different parameters from the Server
+            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):  # TODO: understand if needed or not
                 continue
-
             print("Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
-            self.connectToServer()
+            self.connectToServer()  # Try to connect to the specific Server
 
+        # Connected the Server successfully, and now starting to play
         self.startToPlay()
 
-        # End game message
+        # The game has been finished, getting the final result
         msgFromServer = self.tcpSocket.recv(1024)
         print(msgFromServer.decode('UTF-8'))
 
+        # Closing the tcpSocket
         try:
             self.tcpSocket.shutdown(socket.SHUT_RDWR)
             self.tcpSocket.close()
@@ -65,35 +71,45 @@ class Client:
 
         print("Server disconnected, listening for offer requests...")
 
+        # Runs the Client once again
         self.restart()
 
     def connectToServer(self):
+
+        # Try to connect to the server
         try:
             self.tcpSocket.connect((self.serverIP, self.serverPort))  # TODO: what happens if the server is not listening anymore
         except socket.error:
             print("Failed to connect to the server with IP " + str(self.serverIP))
             return
 
-        # sending the server client's name
+        # Sending the server the client name
         self.tcpSocket.send(bytes(self.name), 'UTF-8')
         self.serverConnected = 1
 
+
     def startToPlay(self):
+
+        # Receiving and printing the question from the Server
         msgFromServer = self.tcpSocket.recv(1024)
         print(msgFromServer.decode('UTF-8'))
 
         # TODO: understand the msvcrt.getch()
         # TODO: what happens if the other player answered first
 
+        # Answer the question
         answer = msvcrt.getch('Answer as fast as you can: ')
         self.tcpSocket.send(answer)
 
     def restart(self):
+
+        # Initializing the needed parameters
         self.serverIP = None
         self.serverPort = None
         self.serverConnected = 0
 
-        if self.stopTheGame:
+        if self.stopTheGame:  # Check if to Stop the Client
+
             # Closing the udpSocket
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
@@ -110,7 +126,7 @@ class Client:
                 print("Failed to close the socket")
                 sys.exit()
         else:
-            self.startToPlay()
+            self.startToPlay()  # Continue in running the Client
 
-    def stopTheGameFunc(self):
+    def stopTheGameFunc(self):  # Function that stops the Client
         self.stopTheGame = True
