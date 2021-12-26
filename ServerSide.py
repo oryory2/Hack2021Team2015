@@ -10,13 +10,20 @@ from typing import Type
 from datetime import time, datetime
 
 
+
+#  TODO: handle exception of failed message
+
+
+stopTheGame = False
+
+
 class Server:
 
-    def __init__(self):
+    def _init_(self):
 
         # initializing the Square parameters
-        self.uPortNumber = 2015
-        self.tPortNumber = 12312
+        self.uPortNumber = 13117
+        self.tPortNumber = 12312 # Check!!!!!
         self.host = ''
         self.teamOneName = None
         self.teamTwoName = None
@@ -29,7 +36,6 @@ class Server:
         self.answer = None
         self.answerOneTime = None
         self.answerTwoTime = None
-        self.stopTheGame = 10
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
         self.clientsConnected = 0
@@ -39,20 +45,20 @@ class Server:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         except socket.error:
-            print("Failed to create UDP socket")
+            print("Failed to create server UDP socket")
             sys.exit()
 
         try:
             self.ip = socket.gethostbyname(socket.gethostname())
         except socket.gaierror:
-            print("Hostname couldn't be resolved")
+            print("Hostname server couldn't be resolved")
             sys.exit()
 
         # initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(family=socket.AF_INET, Type=socket.SOCK_STREAM)
         except socket.error:
-            print("Failed to create TCP socket")
+            print("Failed to create server TCP socket")
             sys.exit()
         self.tcpSocket.bind((self.host, self.tPortNumber))
 
@@ -104,17 +110,9 @@ class Server:
             mathMsg = "How much is " + numOne + " - " + numTwo + "?"
             result = numOne - numTwo
 
-        # Welcome the two Teams
-        self.teamOneSocket.sendall(
-            "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n "
-            "Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName)
-        self.teamTwoSocket.sendall(
-            "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n "
-            "Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName)
-
-        #  Ask the math question
-        self.teamOneSocket.sendall("Please answer the following question as fast as you can:\n" + mathMsg)
-        self.teamTwoSocket.sendall("Please answer the following question as fast as you can:\n" + mathMsg)
+        # Welcome the two Teams and ask the math question
+        self.teamOneSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
+        self.teamTwoSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
 
         teamOneGameThread = Thread(target=self.getAnswerFromTeam(self.teamOneSocket, 1), daemon=True)
         teamTwoGameThread = Thread(target=self.getAnswerFromTeam(self.teamTwoSocket, 2), daemon=True)
@@ -199,7 +197,6 @@ class Server:
 
     def printResultDraw(self, result):  # Draw
 
-
         print("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
         self.teamOneSocket.sendall(
             "Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
@@ -207,7 +204,31 @@ class Server:
             "Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
 
 
+
+    def getAnswerFromTeam(self, teamSocket, teamNumber):
+
+        teamSocket.setblocking(False)
+        stopper = time.time()
+
+        while not self.answer and stopper <= 10:
+            try:
+                teamAnswer = teamSocket.recv(1024)
+            except:
+                pass
+
+            if teamAnswer is not None:
+                self.answer = True
+                if teamNumber == 1:
+                    self.answerOne = teamAnswer
+                    self.answerOneTime = datetime.now()
+                if teamNumber == 2:
+                    self.answerTwo = teamAnswer
+                    self.answerTwoTime = datetime.now()
+
+
     def restartServer(self):
+
+        print("Game over, sending out offer requests...")
 
         self.teamOneName = None
         self.teamTwoName = None
@@ -218,10 +239,8 @@ class Server:
         self.answerOne = None
         self.answerTwo = None
         self.clientsConnected = 0
-        self.stopTheGame = self.stopTheGame - 1
 
-        if self.stopTheGame == 0:  # stop the server
-
+        if stopTheGame:
             # Closing the udpSocket
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
@@ -237,23 +256,10 @@ class Server:
             except socket.error:
                 print("Failed to close the socket")
                 sys.exit()
-
         else:
             self.acceptingClients()  # continue in running the server
 
-    def getAnswerFromTeam(self, teamSocket, teamNumber):
+    def stopTheGameFunc(self):
+        stopTheGame = True
 
-        teamSocket.setblocking(False)
-        stopper = time.time()
-
-        while not self.answer and stopper <= 10:
-            teamAnswer = teamSocket.recv(1024)
-            if teamAnswer is not None:
-                self.answer = True
-                if teamNumber == 1:
-                    self.answerOne = teamAnswer
-                    self.answerOneTime = datetime.now()
-                if teamNumber == 2:
-                    self.answerTwo = teamAnswer
-                    self.answerTwoTime = datetime.now()
 
