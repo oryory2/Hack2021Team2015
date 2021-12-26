@@ -7,6 +7,7 @@ import _thread
 import multiprocessing
 from threading import Thread
 from typing import Type
+from datetime import time, datetime
 
 
 class Server:
@@ -25,11 +26,13 @@ class Server:
         self.teamTwoAddress = None
         self.answerOne = None
         self.answerTwo = None
+        self.answer = None
+        self.answerOneTime = None
+        self.answerTwoTime = None
         self.stopTheGame = 10
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
         self.clientsConnected = 0
-
 
         # initializing the UDP Socket
         try:
@@ -53,13 +56,10 @@ class Server:
             sys.exit()
         self.tcpSocket.bind((self.host, self.tPortNumber))
 
-
-
     def broadcastMsg(self, msg):
         while self.clientsConnected != 2:
             self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))  # TODO correct the broadcast dest ip
             time.sleep(1)  # send the broadcastMsg every 1 second
-
 
     def acceptingClients(self):  # first function to run on the server side
 
@@ -71,7 +71,6 @@ class Server:
         tcpPortNumberInBytes = self.tcp_port.to_bytes(byteorder='big', length=2)
         broadMsg = magicCookieInBytes + messageTypeInBytes + tcpPortNumberInBytes
 
-
         print(startMsg)
         broadcastThread = Thread(target=self.broadcastMsg(broadMsg), daemon=True)
         broadcastThread.start()
@@ -79,15 +78,16 @@ class Server:
         while self.clientsConnected < 2:
             if self.clientsConnected == 0:
                 self.teamOneSocket, self.teamOneAddress = self.tcpSocket.accept()
-                self.teamOneName = self.teamOneSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the first Team
+                self.teamOneName = self.teamOneSocket.recv(1024).decode(
+                    'UTF-8')  # receive the TeamName of the first Team
                 self.clientsConnected = self.clientsConnected + 1
 
             else:  # the second Client connected to the server
                 self.teamTwoSocket, self.teamTwoAddress = self.tcpSocket.accept()
-                self.teamTwoName = self.teamTwoSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the second Team
+                self.teamTwoName = self.teamTwoSocket.recv(1024).decode(
+                    'UTF-8')  # receive the TeamName of the second Team
                 self.clientsConnected = self.clientsConnected + 1
         self.startTheGame()
-
 
     def startTheGame(self):
 
@@ -104,17 +104,17 @@ class Server:
             mathMsg = "How much is " + numOne + " - " + numTwo + "?"
             result = numOne - numTwo
 
-
         # Welcome the two Teams
-        self.teamOneSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n "
-                                   "Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName)
-        self.teamTwoSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n "
-                                   "Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName)
+        self.teamOneSocket.sendall(
+            "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n "
+            "Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName)
+        self.teamTwoSocket.sendall(
+            "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n "
+            "Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName)
 
         #  Ask the math question
         self.teamOneSocket.sendall("Please answer the following question as fast as you can:\n" + mathMsg)
         self.teamTwoSocket.sendall("Please answer the following question as fast as you can:\n" + mathMsg)
-
 
         teamOneGameThread = Thread(target=self.getAnswerFromTeam(self.teamOneSocket, 1), daemon=True)
         teamTwoGameThread = Thread(target=self.getAnswerFromTeam(self.teamTwoSocket, 2), daemon=True)
@@ -125,34 +125,47 @@ class Server:
         teamOneGameThread.join()
         teamTwoGameThread.join()
 
+        if self.answerOne is not None and self.answerTwo is not None:
+            deltaTime = self.answerOneTime - self.answerTwoTime
+
+            if deltaTime < 0:  # TeamOne answered first
+
+                if self.answerOne is not None:
+                    if result == self.answerOne:  # the first Team has won
+                        self.printResultWin(self.teamOneName, result)
+
+                    else:  # the second Team has won
+                        self.printResultWin(self.teamTwoName, result)
+
+            elif deltaTime > 0:  # TeamTwo answered first
+
+                if result == self.answerTwo:  # the second Team has won
+                    self.printResultWin(self.teamTwoName, result)
+
+                else:  # the first Team has won
+                    self.printResultWin(self.teamOneName, result)
+            else:
+                # Draw
+                self.printResultDraw(result)
+
+
         if self.answerOne is not None:
             if result == self.answerOne:  # the first Team has won
-                print("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
-                self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
-                self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
+                self.printResultWin(self.teamOneName, result)
 
             else:  # the second Team has won
-                print("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamTwoName)
-                self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamTwoName)
-                self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamTwoName)
-
+                self.printResultWin(self.teamTwoName,result)
 
         elif self.answerTwo is not None:
-            if result == self.answerOne:  # the second Team has won
-                print("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamTwoName)
-                self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamTwoName)
-                self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamTwoName)
+            if result == self.answerTwo:  # the second Team has won
+                self.printResultWin(self.teamTwoName,result)
 
             else:  # the first Team has won
-                print("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
-                self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
-                self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
-
+                self.printResultWin(self.teamOneName,result)
 
         else:  # Draw
-            print("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
-            self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
-            self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
+            self.printResultDraw(result)
+
 
         # Closing the first tcpSocket
         try:
@@ -173,6 +186,25 @@ class Server:
         self.restartServer()
 
 
+
+    def printResultWin(self, winnerTeam, result):  # not Draw
+
+        print("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + winnerTeam)
+        self.teamOneSocket.sendall(
+            "Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + winnerTeam)
+        self.teamTwoSocket.sendall(
+            "Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + winnerTeam)
+
+
+
+    def printResultDraw(self, result):  # Draw
+
+
+        print("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
+        self.teamOneSocket.sendall(
+            "Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
+        self.teamTwoSocket.sendall(
+            "Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
 
 
     def restartServer(self):
@@ -209,19 +241,19 @@ class Server:
         else:
             self.acceptingClients()  # continue in running the server
 
-
     def getAnswerFromTeam(self, teamSocket, teamNumber):
-        teamAnswer = teamSocket.recv(1024)
-        #  TODO stop the second Thread
-        #  TODO stop the game if 10 sec was passed without a answer
 
-        if teamNumber == 1:
-            self.answerOne = teamAnswer
-        if teamNumber == 2:
-            self.answerTwo = teamAnswer
+        teamSocket.setblocking(False)
+        stopper = time.time()
 
-
-
-
-
+        while not self.answer and stopper <= 10:
+            teamAnswer = teamSocket.recv(1024)
+            if teamAnswer is not None:
+                self.answer = True
+                if teamNumber == 1:
+                    self.answerOne = teamAnswer
+                    self.answerOneTime = datetime.now()
+                if teamNumber == 2:
+                    self.answerTwo = teamAnswer
+                    self.answerTwoTime = datetime.now()
 
