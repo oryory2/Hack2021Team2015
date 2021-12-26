@@ -14,9 +14,6 @@ from datetime import time, datetime
 #  TODO: handle exception of failed message
 
 
-stopTheGame = False
-
-
 class Server:
 
     def _init_(self):
@@ -36,6 +33,7 @@ class Server:
         self.answer = None
         self.answerOneTime = None
         self.answerTwoTime = None
+        self.stopTheGame = False
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
         self.clientsConnected = 0
@@ -62,16 +60,13 @@ class Server:
             sys.exit()
         self.tcpSocket.bind((self.host, self.tPortNumber))
 
-    def broadcastMsg(self, msg):
-        while self.clientsConnected != 2:
-            self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))  # TODO correct the broadcast dest ip
-            time.sleep(1)  # send the broadcastMsg every 1 second
+
 
     def acceptingClients(self):  # first function to run on the server side
 
-        self.tcpSocket.listen(2)  # server start listening
+        self.tcpSocket.listen(2)
 
-        startMsg = "Server started, listening on IP address " + self.ip
+        startMsg = "Server started, listening on IP address " + str(self.ip)
         magicCookieInBytes = self.magicCookie.to_bytes(byteorder='big', length=4)
         messageTypeInBytes = self.message_type.to_bytes(byteorder='big', length=1)
         tcpPortNumberInBytes = self.tcp_port.to_bytes(byteorder='big', length=2)
@@ -95,6 +90,11 @@ class Server:
                 self.clientsConnected = self.clientsConnected + 1
         self.startTheGame()
 
+    def broadcastMsg(self, msg):
+        while self.clientsConnected != 2:
+            self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))  # TODO correct the broadcast dest ip
+            time.sleep(1)  # send the broadcastMsg every second
+
     def startTheGame(self):
 
         time.sleep(10)  # wait 10 seconds until the start of the game
@@ -104,15 +104,15 @@ class Server:
 
         randomMathOperator = random.randint(0, 1)
         if randomMathOperator > 0.5:
-            mathMsg = "How much is " + numOne + " + " + numTwo + "?"
+            mathMsg = "How much is " + str(numOne) + " + " + str(numTwo) + "?"
             result = numOne + numTwo
         else:
-            mathMsg = "How much is " + numOne + " - " + numTwo + "?"
+            mathMsg = "How much is " + str(numOne) + " - " + str(numTwo) + "?"
             result = numOne - numTwo
 
         # Welcome the two Teams and ask the math question
-        self.teamOneSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
-        self.teamTwoSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + self.teamOneName + "\n2. " + self.teamTwoName + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
+        self.teamOneSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
+        self.teamTwoSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
 
         teamOneGameThread = Thread(target=self.getAnswerFromTeam(self.teamOneSocket, 1), daemon=True)
         teamTwoGameThread = Thread(target=self.getAnswerFromTeam(self.teamTwoSocket, 2), daemon=True)
@@ -187,21 +187,21 @@ class Server:
 
     def printResultWin(self, winnerTeam, result):  # not Draw
 
-        print("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + winnerTeam)
+        print("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
         self.teamOneSocket.sendall(
-            "Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + winnerTeam)
+            "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
         self.teamTwoSocket.sendall(
-            "Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + winnerTeam)
+            "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
 
 
 
     def printResultDraw(self, result):  # Draw
 
-        print("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
+        print("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
         self.teamOneSocket.sendall(
-            "Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
+            "Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
         self.teamTwoSocket.sendall(
-            "Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
+            "Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
 
 
 
@@ -240,7 +240,7 @@ class Server:
         self.answerTwo = None
         self.clientsConnected = 0
 
-        if stopTheGame:
+        if self.stopTheGame:
             # Closing the udpSocket
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
@@ -260,6 +260,6 @@ class Server:
             self.acceptingClients()  # continue in running the server
 
     def stopTheGameFunc(self):
-        stopTheGame = True
+        self.stopTheGame = True
 
 

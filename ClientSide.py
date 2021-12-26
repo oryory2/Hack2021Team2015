@@ -2,7 +2,6 @@ import msvcrt
 import socket
 import sys
 
-stopTheGame = False
 
 
 class Client:
@@ -15,6 +14,7 @@ class Client:
         self.messageType = 0x2
         self.serverIP = None
         self.serverPort = None
+        self.stopTheGame = False
         self.serverConnected = 0
 
         # initializing the UDP Socket
@@ -43,11 +43,11 @@ class Client:
             messageType = msgFromServer.hex()[9:10]
             self.serverPort = int(msgFromServer.hex()[10:], 16)
 
-            # TODO: need to understand if needed or not
-            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):
+
+            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):  # TODO: need to understand if needed or not
                 continue
 
-            print("Received offer from " + serverInfo[0] + ", attempting to connect...\n")
+            print("Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
             self.connectToServer()
 
         self.startToPlay()
@@ -68,10 +68,10 @@ class Client:
         self.restart()
 
     def connectToServer(self):
-        try:  # TODO: what happens if the server is not listening anymore
-            self.tcpSocket.connect((self.serverIP, self.serverPort))
+        try:
+            self.tcpSocket.connect((self.serverIP, self.serverPort))  # TODO: what happens if the server is not listening anymore
         except socket.error:
-            print("Failed to connect to the server with IP " + self.serverIP)
+            print("Failed to connect to the server with IP " + str(self.serverIP))
             return
 
         # sending the server client's name
@@ -93,7 +93,7 @@ class Client:
         self.serverPort = None
         self.serverConnected = 0
 
-        if stopTheGame:
+        if self.stopTheGame:
             # Closing the udpSocket
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
@@ -113,4 +113,4 @@ class Client:
             self.startToPlay()
 
     def stopTheGameFunc(self):
-        stopTheGame = True
+        self.stopTheGame = True
