@@ -25,6 +25,7 @@ class Server:
         self.teamTwoAddress = None
         self.answerOne = None
         self.answerTwo = None
+        self.stopTheGame = 10
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
         self.clientsConnected = 0
@@ -60,7 +61,7 @@ class Server:
             time.sleep(1)  # send the broadcastMsg every 1 second
 
 
-    def acceptingClients(self):
+    def acceptingClients(self):  # first function to run on the server side
 
         self.tcpSocket.listen(2)  # server start listening
 
@@ -147,19 +148,66 @@ class Server:
                 self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
                 self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nCongratulations to the winner: " + self.teamOneName)
 
+
         else:  # Draw
             print("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
             self.teamOneSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
             self.teamTwoSocket.sendall("Game Over!\nThe correct answer was " + result + "!\nNone of the team answered on time, so there is a Draw!")
 
+        # Closing the first tcpSocket
+        try:
+            self.teamOneSocket.shutdown(socket.SHUT_RDWR)
+            self.teamOneSocket.close()
+        except socket.error:
+            print("Failed to close the socket")
+            sys.exit()
+
+        # Closing the second tcpSocket
+        try:
+            self.teamTwoSocket.shutdown(socket.SHUT_RDWR)
+            self.teamTwoSocket.close()
+        except socket.error:
+            print("Failed to close the socket")
+            sys.exit()
+
+        self.restartServer()
 
 
 
 
+    def restartServer(self):
 
+        self.teamOneName = None
+        self.teamTwoName = None
+        self.teamOneSocket = None
+        self.teamTwoSocket = None
+        self.teamOneAddress = None
+        self.teamTwoAddress = None
+        self.answerOne = None
+        self.answerTwo = None
+        self.clientsConnected = 0
+        self.stopTheGame = self.stopTheGame - 1
 
+        if self.stopTheGame == 0:  # stop the server
 
+            # Closing the udpSocket
+            try:
+                self.udpSocket.shutdown(socket.SHUT_RDWR)
+                self.udpSocket.close()
+            except socket.error:
+                print("Failed to close the socket")
+                sys.exit()
 
+            # Closing the tcpSocket
+            try:
+                self.tcpSocket.shutdown(socket.SHUT_RDWR)
+                self.tcpSocket.close()
+            except socket.error:
+                print("Failed to close the socket")
+                sys.exit()
+
+        else:
+            self.acceptingClients()  # continue in running the server
 
 
     def getAnswerFromTeam(self, teamSocket, teamNumber):
@@ -176,73 +224,4 @@ class Server:
 
 
 
-# pool = ThreadPool(2)  # initializing ThreadPool with 2 threads
-# runServerFlag = 2  # start the game only after the value is 0
-#
-#
-#
-# def serverStrategy(clientSocket):
-#
-#     while runServerFlag < 2:  # wait for the second client to connect
-#         a = 5
-#     # start the game
-#
-#
-# def startServer():
-#
-#     #  initialize the wanted parameters
-#     try:
-#         localIp = socket.gethostbyname(socket.gethostname())
-#     except socket.gaierror:
-#         print("Hostname couldn't be resolved")
-#         sys.exit
-#
-#     localPort = 2015  # server socket port number
-#     bufferSize = 1024
-#
-#     # Create the first UDP socket
-#     try:
-#         udpServerSocket = socket.socket(family=socket.AF_INET, Type=socket.SOCK_DGRAM)
-#
-#     except socket.error:
-#         print("Failed to create UDP socket")
-#         sys.exit()
-#
-#
-#     # bind the socket to a specific address and ip
-#
-#     udpServerSocket.bind(localIp, localPort)
-#     udpServerSocket.settimeout(1)
-#
-#     msgFromServer = "Server started, listening on ip address " + str(localIp)  # Message of the server
-#     print(msgFromServer) ######## brodcast including magic coockie.....port(tcp)
-#
-#
-#     while runServerFlag > 0:
-#         if runServerFlag == 2:
-#             message1, address1 = udpServerSocket.recvfrom(bufferSize)
-#             runServerFlag = 1
-#         else:
-#             message2, address2 = udpServerSocket.recvfrom(bufferSize)
-#             runServerFlag = 0
-#
-#     try:
-#         tcpServerSocketOne = socket.socket(family=socket.AF_INET, Type=socket.SOCK_STREAM)
-#     except socket.error:
-#         print("Failed to create TCP socket")
-#         sys.exit()
-#
-#     currentPortNumber = localPort + 1
-#     tcpServerSocketOne.bind(localIp, currentPortNumber)
-#
-#     newPortNumber = str.encode(currentPortNumber)
-#
-#     udpServerSocket.sendto(newPortNumber, address1)
-#     udpServerSocket.sendto(newPortNumber, address2)
-#
-#     tcpServerSocketOne.listen(2)
-#     while runServerFlag < 2:
-#         (clientSocKet, address) = tcpServerSocketOne.accept()
-#         pool.run(serverStrategy(clientSocKet))
-#         runServerFlag += 1
-#        # if runServerFlag == 2
+
