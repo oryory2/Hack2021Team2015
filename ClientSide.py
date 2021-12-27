@@ -36,10 +36,9 @@ class Client:
             print("Failed to create server TCP socket")
             sys.exit()
 
-    def startClient(self):  # First function to run on the server side
+    def searchForServer(self):  # First function to run on the server side
 
         print("Client started, listening for offer requests...")
-
         while self.serverConnected < 1:
             msgFromServer, serverInfo = self.udpSocket.recvfrom(2048)  # wait for broadcast message from a Server
 
@@ -140,4 +139,4 @@ class Client:
 
 if __name__ == "__main__":
     client = Client()
-    client.startClient()
+    client.searchForServer()

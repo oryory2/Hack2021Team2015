@@ -273,6 +273,7 @@ class Server:
                     self.answerTwoTime = time.now()
 
 
+
     # Function that shows the best three teams played on the server until now
     def showBestTeams(self):
         calcDict = {}
