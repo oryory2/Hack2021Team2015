@@ -185,6 +185,13 @@ class Server:
             self.printResultDraw(result)
             self.updateTeamsTable_draw()
 
+        bestTeamsMSG = self.showBestTeams()
+
+        print(bestTeamsMSG)
+
+        self.teamOneSocket.send(bytes(bestTeamsMSG), 'UTF-8')
+        self.teamTwoSocket.send(bytes(bestTeamsMSG), 'UTF-8')
+
 
         # Closing the first tcpSocket
         try:
@@ -306,5 +313,19 @@ class Server:
 
     def stopTheGameFunc(self):  # Function that stops the Client
         self.stopTheGame = True
+
+
+
+    def showBestTeams(self):
+        sortedDict = sorted(self.teamsTable, lambda x: (x[1]/x[0]))
+        teamsList = sortedDict.keys()
+
+        #Win percentage of the teams
+        team1 = ((sortedDict[teamsList[0]][1]/sortedDict[teamsList[0]][0])*100)
+        team2 = ((sortedDict[teamsList[1]][1]/sortedDict[teamsList[1]][0])*100)
+        team3 = ((sortedDict[teamsList[2]][1]/sortedDict[teamsList[2]][0])*100)
+
+        return ("The top 3 teams on the server are:\n1. " + teamsList[0] + " - win percentages: " + team1 + "\n2. " +
+         teamsList[1] + " - win percentages: " + team2 + "\n3. " + teamsList[2] + " - win percentages: " + team3)
 
 
