@@ -187,8 +187,8 @@ class Server:
 
         print(bestTeamsMsg)
 
-        self.teamOneSocket.send(bytes(bestTeamsMsg), 'UTF-8')
-        self.teamTwoSocket.send(bytes(bestTeamsMsg), 'UTF-8')
+        self.teamOneSocket.send(bytes(bestTeamsMsg, 'UTF-8'))
+        self.teamTwoSocket.send(bytes(bestTeamsMsg, 'UTF-8'))
 
 
         # Closing the first tcpSocket
@@ -324,9 +324,6 @@ class Server:
 
     def stopTheGameFunc(self):  # Function that stops the Client
         self.stopTheGame = True
-
-
-
 
 
 

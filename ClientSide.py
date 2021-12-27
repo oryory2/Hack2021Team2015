@@ -85,7 +85,7 @@ class Client:
             return
 
         # Sending the server the client name
-        self.tcpSocket.send(bytes(self.name), 'UTF-8')
+        self.tcpSocket.send(bytes(self.name, 'UTF-8'))
         self.serverConnected = 1
 
 
