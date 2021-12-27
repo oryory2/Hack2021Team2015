@@ -7,7 +7,7 @@ from threading import Thread
 
 class Client:
 
-    def _init_(self):
+    def __init__(self):
 
         # Initializing the Square parameters
         self.name = "None"
@@ -31,7 +31,7 @@ class Client:
 
         # Initializing the TCP Socket
         try:
-            self.tcpSocket = socket.socket(family=socket.AF_INET, Type=socket.SOCK_STREAM)
+            self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error:
             print("Failed to create server TCP socket")
             sys.exit()
@@ -135,3 +135,9 @@ class Client:
 
     def stopTheGameFunc(self):  # Function that stops the Client
         self.stopTheGame = True
+
+
+
+if __name__ == "__main__":
+    client = Client()
+    client.startClient()

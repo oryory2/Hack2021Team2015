@@ -1,13 +1,9 @@
 import random
 import time
-from multiprocessing.pool import ThreadPool
 import socket
 import sys
-import _thread
-import multiprocessing
 from threading import Thread
-from typing import Type
-from datetime import time, datetime
+
 
 
 
@@ -17,11 +13,11 @@ from datetime import time, datetime
 
 class Server:
 
-    def _init_(self):
+    def __init__(self, tcpPort):
 
         # Initializing the Square parameters
         self.uPortNumber = 13117
-        self.tPortNumber = 12312  # TODO: check what should be the port number
+        self.tPortNumber = tcpPort  # TODO: check what should be the port number
         self.host = ''
         self.teamOneName = None
         self.teamTwoName = None
@@ -56,7 +52,7 @@ class Server:
 
         # Initializing the TCP Socket
         try:
-            self.tcpSocket = socket.socket(family=socket.AF_INET, Type=socket.SOCK_STREAM)
+            self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error:
             print("Failed to create server TCP socket")
             sys.exit()
@@ -71,8 +67,8 @@ class Server:
         # Creating the different ServerMsgs
         startMsg = "Server started, listening on IP address " + str(self.ip)
         magicCookieInBytes = self.magicCookie.to_bytes(byteorder='big', length=4)
-        messageTypeInBytes = self.message_type.to_bytes(byteorder='big', length=1)
-        tcpPortNumberInBytes = self.tcp_port.to_bytes(byteorder='big', length=2)
+        messageTypeInBytes = self.messageType.to_bytes(byteorder='big', length=1)
+        tcpPortNumberInBytes = self.tPortNumber.to_bytes(byteorder='big', length=2)
         broadMsg = magicCookieInBytes + messageTypeInBytes + tcpPortNumberInBytes
 
         print(startMsg)
@@ -96,10 +92,12 @@ class Server:
         self.startTheGame()
 
 
+
     def broadcastMsg(self, msg):  # Function to send the broadcastMsg via UDP transport
         while self.clientsConnected != 2:
             self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))  # TODO correct the broadcast dest ip
             time.sleep(1)  # Wait one second between messages
+
 
     def startTheGame(self):
 
@@ -133,7 +131,7 @@ class Server:
         teamTwoGameThread.join()
 
         if self.answerOne is not None and self.answerTwo is not None:
-            deltaTime = (datetime.strptime(self.answerOneTime, '%H:%M') - datetime.strptime(self.answerTwoTime, '%H:%M'))/12
+            deltaTime = (time.strptime(self.answerOneTime, '%H:%M') - time.strptime(self.answerTwoTime, '%H:%M'))/12
 
 
             if deltaTime.seconds < 0:  # teamOne answered first
@@ -185,12 +183,12 @@ class Server:
             self.printResultDraw(result)
             self.updateTeamsTable_draw()
 
-        bestTeamsMSG = self.showBestTeams()
+        bestTeamsMsg = self.showBestTeams()
 
-        print(bestTeamsMSG)
+        print(bestTeamsMsg)
 
-        self.teamOneSocket.send(bytes(bestTeamsMSG), 'UTF-8')
-        self.teamTwoSocket.send(bytes(bestTeamsMSG), 'UTF-8')
+        self.teamOneSocket.send(bytes(bestTeamsMsg), 'UTF-8')
+        self.teamTwoSocket.send(bytes(bestTeamsMsg), 'UTF-8')
 
 
         # Closing the first tcpSocket
@@ -270,11 +268,24 @@ class Server:
                 self.answer = True
                 if teamNumber == 1:  # teamOne has answered
                     self.answerOne = teamAnswer
-                    self.answerOneTime = datetime.now()
+                    self.answerOneTime = time.now()
                 if teamNumber == 2:  # teamTwo has answered
                     self.answerTwo = teamAnswer
-                    self.answerTwoTime = datetime.now()
+                    self.answerTwoTime = time.now()
 
+
+    # Function that shows the best three teams played on the server until now
+    def showBestTeams(self):
+        sortedDict = sorted(self.teamsTable, lambda x: (x[1]/x[0]))
+        teamsList = sortedDict.keys()
+
+        #  Win percentage of the teams
+        team1 = ((sortedDict[teamsList[0]][1]/sortedDict[teamsList[0]][0])*100)
+        team2 = ((sortedDict[teamsList[1]][1]/sortedDict[teamsList[1]][0])*100)
+        team3 = ((sortedDict[teamsList[2]][1]/sortedDict[teamsList[2]][0])*100)
+
+        return ("The top 3 teams on the server are:\n1. " + teamsList[0] + " - win percentages: " + team1 + "\n2. " +
+         teamsList[1] + " - win percentages: " + team2 + "\n3. " + teamsList[2] + " - win percentages: " + team3)
 
     def restartServer(self):
 
@@ -316,16 +327,9 @@ class Server:
 
 
 
-    def showBestTeams(self):
-        sortedDict = sorted(self.teamsTable, lambda x: (x[1]/x[0]))
-        teamsList = sortedDict.keys()
-
-        #Win percentage of the teams
-        team1 = ((sortedDict[teamsList[0]][1]/sortedDict[teamsList[0]][0])*100)
-        team2 = ((sortedDict[teamsList[1]][1]/sortedDict[teamsList[1]][0])*100)
-        team3 = ((sortedDict[teamsList[2]][1]/sortedDict[teamsList[2]][0])*100)
-
-        return ("The top 3 teams on the server are:\n1. " + teamsList[0] + " - win percentages: " + team1 + "\n2. " +
-         teamsList[1] + " - win percentages: " + team2 + "\n3. " + teamsList[2] + " - win percentages: " + team3)
 
 
+
+if __name__ == "__main__":
+    server = Server(1255)
+    server.acceptingClients()
