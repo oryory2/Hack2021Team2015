@@ -94,7 +94,7 @@ class Client:
         # Receiving and printing the question from the Server
         msgFromServer = self.tcpSocket.recv(1024)
         print(msgFromServer.decode('UTF-8'))
-        teamOneGameThread = Thread(target=self.asnwerToServer(), daemon=True)
+        teamOneGameThread = Thread(target=self.asnwerToServer, args=())
         teamOneGameThread.start()
 
         # Answer the math question

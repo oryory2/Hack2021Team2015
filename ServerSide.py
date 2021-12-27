@@ -74,12 +74,11 @@ class Server:
         print(startMsg)
 
         # Starting to send the broadcastMsg
-        broadcastThread = Thread(target=self.broadcastMsg(broadMsg), daemon=True)
+        broadcastThread = Thread(target=self.broadcastMsg, args=(broadMsg,))
         broadcastThread.start()
 
         # Wait for two Clients to connect the Server
         while self.clientsConnected < 2:
-
             if self.clientsConnected == 0:
                 self.teamOneSocket, self.teamOneAddress = self.tcpSocket.accept()  # Wait for the first Client to connect
                 self.teamOneName = self.teamOneSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the first Team
@@ -117,8 +116,8 @@ class Server:
             result = numOne - numTwo
 
         # Welcome the two Teams and ask the math question
-        self.teamOneSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
-        self.teamTwoSocket.sendall("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg)
+        self.teamOneSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
+        self.teamTwoSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
 
         # Creating two Threads that will take answer from the two Clients
         teamOneGameThread = Thread(target=self.getAnswerFromTeam(self.teamOneSocket, 1), daemon=True)
@@ -237,9 +236,9 @@ class Server:
 
         print("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
         self.teamOneSocket.sendall(
-            "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
+            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
         self.teamTwoSocket.sendall(
-            "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
+            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
 
 
 
@@ -247,9 +246,9 @@ class Server:
 
         print("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
         self.teamOneSocket.sendall(
-            "Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
+            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
         self.teamTwoSocket.sendall(
-            "Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
+            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
 
 
 
@@ -276,8 +275,14 @@ class Server:
 
     # Function that shows the best three teams played on the server until now
     def showBestTeams(self):
-        sortedDict = sorted(self.teamsTable, lambda x: (x[1]/x[0]))
+        calcDict = {}
+        for k, v in self.teamsTable.items():
+            calcDict[k] = v[1]/v[0]
+
+        sortedDict = sorted(calcDict, key=lambda x: x[1])
+        print(sortedDict)
         teamsList = sortedDict.keys()
+
 
         #  Win percentage of the teams
         team1 = ((sortedDict[teamsList[0]][1]/sortedDict[teamsList[0]][0])*100)
