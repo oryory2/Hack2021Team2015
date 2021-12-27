@@ -35,6 +35,7 @@ class Server:
         self.answerOneTime = None
         self.answerTwoTime = None
         self.stopTheGame = False
+        self.teamsTable = {}
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
         self.clientsConnected = 0
@@ -132,47 +133,57 @@ class Server:
         teamTwoGameThread.join()
 
         if self.answerOne is not None and self.answerTwo is not None:
-            deltaTime = self.answerOneTime - self.answerTwoTime
+            deltaTime = (datetime.strptime(self.answerOneTime, '%H:%M') - datetime.strptime(self.answerTwoTime, '%H:%M'))/12
 
-            if deltaTime < 0:  # teamOne answered first #TODO check the deltaTime (int?time?)
+
+            if deltaTime.seconds < 0:  # teamOne answered first
 
                 if self.answerOne is not None:
                     if result == self.answerOne:  # The first Team has won
                         self.printResultWin(self.teamOneName, result)
+                        self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
 
                     else:  # The second Team has won
                         self.printResultWin(self.teamTwoName, result)
+                        self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
-            elif deltaTime > 0:  # teamTwo answered first
+            elif deltaTime.seconds > 0:  # teamTwo answered first
 
                 if result == self.answerTwo:  # The second Team has won
                     self.printResultWin(self.teamTwoName, result)
+                    self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
                 else:  # The first Team has won
                     self.printResultWin(self.teamOneName, result)
+                    self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
             else:
                 # Draw
                 self.printResultDraw(result)
-
+                self.updateTeamsTable_draw()
 
         if self.answerOne is not None:  # teamOne answered first
 
             if result == self.answerOne:  # The first Team has won
                 self.printResultWin(self.teamOneName, result)
+                self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
 
             else:  # The second Team has won
                 self.printResultWin(self.teamTwoName, result)
+                self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
         elif self.answerTwo is not None:  # teamTwo answered first
 
             if result == self.answerTwo:  # The second Team has won
                 self.printResultWin(self.teamTwoName, result)
+                self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
             else:  # The first Team has won
                 self.printResultWin(self.teamOneName, result)
+                self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
 
         else:  # Draw - none of the teams answered on time
             self.printResultDraw(result)
+            self.updateTeamsTable_draw()
 
 
         # Closing the first tcpSocket
@@ -194,6 +205,27 @@ class Server:
         # Runs the Server once again
         self.restartServer()
 
+
+    def updateTeamsTable_win(self, winnerTeam, loserTeam):
+        if winnerTeam in self.teamsTable:
+            self.teamsTable[winnerTeam] = (self.teamsTable[winnerTeam][0] + 1, self.teamsTable[winnerTeam][1] + 1)  # (gamesPlayed, gamesWon)
+        else:
+            self.teamsTable[winnerTeam] = (1, 1)
+        if loserTeam in self.teamsTable:
+            self.teamsTable[loserTeam] -= (self.teamsTable[loserTeam][0] + 1, self.teamsTable[loserTeam][1])  # (gamesPlayed, gamesWon)
+        else:
+            self.teamsTable[loserTeam] = (1, 0)
+
+
+    def updateTeamsTable_draw(self):
+        if self.teamOneName in self.teamsTable:
+            self.teamsTable[self.teamOneName] = (self.teamsTable[self.teamOneName][0] + 1, self.teamsTable[self.teamOneName][1])  # (gamesPlayed, gamesWon)
+        else:
+            self.teamsTable[self.teamOneName] = (1, 0)
+        if self.teamTwoName in self.teamsTable:
+            self.teamsTable[self.teamTwoName] = (self.teamsTable[self.teamTwoName][0] + 1, self.teamsTable[self.teamTwoName][1])  # (gamesPlayed, gamesWon)
+        else:
+            self.teamsTable[self.teamTwoName] = (1, 0)
 
 
     def printResultWin(self, winnerTeam, result):  # not Draw

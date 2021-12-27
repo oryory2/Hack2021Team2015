@@ -1,7 +1,8 @@
 import msvcrt
 import socket
 import sys
-
+from datetime import time
+from threading import Thread
 
 
 class Client:
@@ -93,13 +94,17 @@ class Client:
         # Receiving and printing the question from the Server
         msgFromServer = self.tcpSocket.recv(1024)
         print(msgFromServer.decode('UTF-8'))
+        teamOneGameThread = Thread(target=self.asnwerToServer(), daemon=True)
+        teamOneGameThread.start()
 
-        # TODO: understand the msvcrt.getch()
-        # TODO: what happens if the other player answered first
-
-        # Answer the question
-        answer = msvcrt.getch('Answer as fast as you can: ')
-        self.tcpSocket.send(answer)
+        # Answer the math question
+    def answerToServer(self):  # TODO: understand the msvcrt.getch()
+                               # TODO: what happens if the other player answered first
+        t0 = time.time()
+        while time.time() - t0 < 10:
+            answer = input('Answer as fast as you can: ')
+            self.tcpSocket.send(answer)
+        #  answer = msvcrt.getch('Answer as fast as you can: ')
 
     def restart(self):
 
