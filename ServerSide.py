@@ -279,18 +279,23 @@ class Server:
         for k, v in self.teamsTable.items():
             calcDict[k] = v[1]/v[0]
 
-        sortedDict = sorted(calcDict, key=lambda x: x[1])
-        print(sortedDict)
-        teamsList = sortedDict.keys()
+        sortedDict = sorted(calcDict.items(), key=lambda x: x[1])
 
+        team1 = sortedDict[0][1] * 100
 
         #  Win percentage of the teams
-        team1 = ((sortedDict[teamsList[0]][1]/sortedDict[teamsList[0]][0])*100)
-        team2 = ((sortedDict[teamsList[1]][1]/sortedDict[teamsList[1]][0])*100)
-        team3 = ((sortedDict[teamsList[2]][1]/sortedDict[teamsList[2]][0])*100)
+        if len(sortedDict) == 1:
+            return ("The team in the server are:\n1. " + sortedDict[0][0] + " - win percentages: " + str(team1))
 
-        return ("The top 3 teams on the server are:\n1. " + teamsList[0] + " - win percentages: " + team1 + "\n2. " +
-         teamsList[1] + " - win percentages: " + team2 + "\n3. " + teamsList[2] + " - win percentages: " + team3)
+        elif len(sortedDict) == 2:
+            team2 = sortedDict[1][1] * 100
+            return ("The top 3 teams on the server are:\n1. " + sortedDict[0][0] + " - win percentages: " + str(team1) + "\n2. " +
+                    sortedDict[1][0] + " - win percentages: " + str(team2))
+        else:
+            team2 = sortedDict[1][1] * 100
+            team3 = sortedDict[2][1] * 100
+            return ("The top 3 teams on the server are:\n1. " + sortedDict[0][0] + " - win percentages: " + str(team1) + "\n2. " +
+            sortedDict[1][0] + " - win percentages: " + str(team2) + "\n3. " + sortedDict[2][0] + " - win percentages: " + str(team3))
 
     def restartServer(self):
 
