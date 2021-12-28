@@ -1,4 +1,3 @@
-import msvcrt
 import select
 import socket
 import sys
@@ -98,7 +97,7 @@ class Client:
         # Try to connect to the server
         try:
             self.tcpSocket.connect((self.serverIP, self.serverPort))  # TODO: what happens if the server is not listening anymore
-        except: # socket.error:
+        except socket.error:
             print("Failed to connect to the server with IP " + str(self.serverIP))
             return
 

@@ -5,10 +5,7 @@ import socket
 import sys
 from threading import Thread
 
-# TODO : getch with multithread
-# TODO : select(?)
 # TODO: handle exception of failed message, when we send to a client a msg and get exeption
-# TODO correct the broadcast dest ip
 # TODO: check what should be the port number
 
 
@@ -36,6 +33,12 @@ class Server:
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
         self.clientsConnected = 0
+
+        # Creating the broadcastMsg
+        magicCookieInBytes = self.magicCookie.to_bytes(byteorder='big', length=4)
+        messageTypeInBytes = self.messageType.to_bytes(byteorder='big', length=1)
+        tcpPortNumberInBytes = self.tPortNumber.to_bytes(byteorder='big', length=2)
+        self.broadMsg = magicCookieInBytes + messageTypeInBytes + tcpPortNumberInBytes
 
         # Initializing the UDP Socket
         try:
@@ -65,17 +68,11 @@ class Server:
 
         self.tcpSocket.listen(2)
 
-        # Creating the different ServerMsgs
-        startMsg = "Server started, listening on IP address " + str(self.ip)
-        magicCookieInBytes = self.magicCookie.to_bytes(byteorder='big', length=4)
-        messageTypeInBytes = self.messageType.to_bytes(byteorder='big', length=1)
-        tcpPortNumberInBytes = self.tPortNumber.to_bytes(byteorder='big', length=2)
-        broadMsg = magicCookieInBytes + messageTypeInBytes + tcpPortNumberInBytes
-
-        print(startMsg)
+        # Print the listening message
+        print("Server started, listening on IP address " + str(self.ip))
 
         # Starting to send the broadcastMsg
-        broadcastThread = Thread(target=self.broadcastMsg, args=(broadMsg,))
+        broadcastThread = Thread(target=self.broadcastMsg)
         broadcastThread.start()
 
         # Wait for two Clients to connect the Server
@@ -94,9 +91,9 @@ class Server:
 
 
 
-    def broadcastMsg(self, msg):  # Function to send the broadcastMsg via UDP transport
+    def broadcastMsg(self):  # Function to send the broadcastMsg via UDP transport
         while self.clientsConnected != 2:
-            self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))
+            self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))
             time.sleep(1)  # Wait one second between messages
 
 
