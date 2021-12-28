@@ -5,8 +5,9 @@ import socket
 import sys
 from threading import Thread
 
-# TODO: handle exception of failed message, when we send to a client a msg and get exeption
-# TODO: check what should be the port number
+blueColor = '\033[96m'  # blue
+yellowColor = '\033[92m'  # yellow
+failColor = '\033[96m'  # red
 
 
 class Server:
@@ -42,21 +43,21 @@ class Server:
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        except:  # socket.error:
-            print("Failed to create server UDP socket")
+        except:
+            print(failColor + "Failed to create server UDP socket")
             sys.exit()
 
         try:
             self.ip = socket.gethostbyname(socket.gethostname())
-        except:  # socket.gaierror:
-            print("Hostname server couldn't be resolved")
+        except:
+            print(failColor + "Hostname server couldn't be resolved")
             sys.exit()
 
         # Initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except:  # socket.error:
-            print("Failed to create server TCP socket")
+        except:
+            print(failColor + "Failed to create server TCP socket")
             sys.exit()
         self.tcpSocket.bind((self.host, self.tPortNumber))
 
@@ -67,7 +68,7 @@ class Server:
         self.tcpSocket.listen(2)
 
         # Print the listening message
-        print("Server started, listening on IP address " + str(self.ip))
+        print(blueColor + "Server started, listening on IP address " + str(self.ip))
 
         # Starting to send the broadcastMsg
         broadcastThread = Thread(target=self.broadcastMsg)
@@ -79,12 +80,12 @@ class Server:
                 self.teamOneSocket, self.teamOneAddress = self.tcpSocket.accept()  # Wait for the first Client to connect
                 self.teamOneName = self.teamOneSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the first Team
                 self.clientsConnected = self.clientsConnected + 1
-                print("First client connected")
+                print(yellowColor + "First client connected..")
             else:
                 self.teamTwoSocket, self.teamTwoAddress = self.tcpSocket.accept()  # Wait for the second Client to connect
                 self.teamTwoName = self.teamTwoSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the second Team
                 self.clientsConnected = self.clientsConnected + 1
-                print("Second client connected")
+                print(yellowColor + "Second client connected..")
         self.startTheGame()
 
 
@@ -111,20 +112,16 @@ class Server:
 
 
         if oneDisconnected and TwoDisconnected:  # Both Clients disconnected from the server
-            print("Both Teams disconnected, restarting Server..")
+            print(failColor + "Both Teams disconnected, restarting Server..")
             self.closeSocketsAndRestart()
 
         if oneDisconnected:
-            print("Team " + str(self.teamOneName) + " has disconnected from the server, Team " + str(self.teamTwoName) + " won the match")
+            print(failColor + "Team " + str(self.teamOneName) + " has disconnected from the server, Team " + str(self.teamTwoName) + " won the match")
             self.closeSocketsAndRestart()
 
         if TwoDisconnected:
-            print("Team " + str(self.teamTwoName) + " has disconnected from the server, Team " + str(self.teamOneName) + " won the match")
+            print(failColor + "Team " + str(self.teamTwoName) + " has disconnected from the server, Team " + str(self.teamOneName) + " won the match")
             self.closeSocketsAndRestart()
-
-
-
-
 
 
 
@@ -136,7 +133,7 @@ class Server:
         self.checkConnection()
 
         # Start the game
-        print("The Game has been started!")
+        print(blueColor + "The Game has been started!")
 
         # Creating the math question
         numOne = random.randint(0, 5)
@@ -218,16 +215,16 @@ class Server:
         try:
             self.teamOneSocket.shutdown(socket.SHUT_RDWR)
             self.teamOneSocket.close()
-        except:  # socket.error:
-            print("Failed to close the socket")
+        except:
+            print(failColor + "Failed to close the socket")
             sys.exit()
 
         # Closing the second tcpSocket
         try:
             self.teamTwoSocket.shutdown(socket.SHUT_RDWR)
             self.teamTwoSocket.close()
-        except:  # socket.error:
-            print("Failed to close the socket")
+        except:
+            print(failColor + "Failed to close the socket")
             sys.exit()
 
         # Runs the Server once again
@@ -258,7 +255,7 @@ class Server:
 
     def printResultWin(self, winnerTeam, result):  # not Draw
 
-        print("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
+        print(blueColor + "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
         self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(winnerTeam), 'UTF-8'))
         self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(winnerTeam), 'UTF-8'))
 
@@ -266,7 +263,7 @@ class Server:
 
     def printResultDraw(self, result):  # Draw
 
-        print("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
+        print(blueColor + "Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
         self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
         self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
 
@@ -300,20 +297,20 @@ class Server:
 
         sortedLst = sorted(self.teamsTable.items(), key=lambda tup: tup[1][1], reverse=True)
         if len(sortedLst) == 1:
-            print("The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(sortedLst[0][1][1]))
+            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(sortedLst[0][1][1]))
 
         elif len(sortedLst) == 2:
-            print("The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(sortedLst[0][1][1]) + "\n2. " +
+            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(sortedLst[0][1][1]) + "\n2. " +
             str(sortedLst[1][0]) + " - wins: " + str(sortedLst[1][1][1]))
         else:
-            print("The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(
+            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(
                 sortedLst[0][1][1]) + "\n2. " + str(sortedLst[1][0]) + " - wins: " + str(sortedLst[1][1][1]) + "\n3. " + str(sortedLst[2][0]) + " - wins: " + str(sortedLst[2][1][1]))
 
 
 
     def restartServer(self):
 
-        print("Game over, sending out offer requests...")
+        print(blueColor + "Game over, sending out offer requests...")
 
         # Initializing the needed parameters
         self.teamOneName = None
@@ -333,16 +330,16 @@ class Server:
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
                 self.udpSocket.close()
-            except:  # socket.error:
-                print("Failed to close the socket")
+            except:
+                print(failColor + "Failed to close the socket")
                 sys.exit()
 
             # Closing the tcpSocket
             try:
                 self.tcpSocket.shutdown(socket.SHUT_RDWR)
                 self.tcpSocket.close()
-            except:  # socket.error:
-                print("Failed to close the socket")
+            except:
+                print(failColor + "Failed to close the socket")
                 sys.exit()
         else:
             self.acceptingClients()  # Continue in running the server

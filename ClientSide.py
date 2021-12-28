@@ -5,6 +5,11 @@ from datetime import datetime
 from threading import Thread
 
 
+blueColor = '\033[96m'  # blue
+yellowColor = '\033[92m'  # yellow
+failColor = '\033[96m'  # red
+
+
 class Client:
 
     def __init__(self, name):
@@ -24,21 +29,21 @@ class Client:
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        except:  # socket.error:
-            print("Failed to create client UDP socket")
+        except:
+            print(failColor + "Failed to create client UDP socket")
             sys.exit()
         self.udpSocket.bind((self.host, self.port))
 
         # Initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except:  # socket.error:
-            print("Failed to create server TCP socket")
+        except:
+            print(failColor + "Failed to create server TCP socket")
             sys.exit()
 
     def searchForServer(self):  # First function to run on the server side
 
-        print("Client started, listening for offer requests...")
+        print(blueColor + "Client started, listening for offer requests...")
         while self.serverConnected < 1:
             msgFromServer, serverInfo = self.udpSocket.recvfrom(2048)  # wait for broadcast message from a Server
 
@@ -51,7 +56,7 @@ class Client:
             # Verify all the different parameters from the Server
             if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):
                 continue
-            print("Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
+            print(yellowColor + "Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
             self.connectToServer()  # Try to connect to the specific Server
 
         # Connected the Server successfully, and now starting to play
@@ -79,10 +84,10 @@ class Client:
         try:
             msgFromServer = self.tcpSocket.recv(1024) #######
         except:
-            print("Lost connection with the Server..")
+            print(failColor + "Lost connection with the Server..")
             self.closeSocketsAndRestart()
 
-        print(msgFromServer.decode('UTF-8')) #######
+        print(yellowColor + msgFromServer.decode('UTF-8')) #######
 
         # Closing socket and restart the Client
         self.closeSocketsAndRestart()
@@ -93,10 +98,10 @@ class Client:
             self.tcpSocket.shutdown(socket.SHUT_RDWR)
             self.tcpSocket.close()
         except:  # socket.error:
-            print("Failed to close the socket")
+            print(failColor + "Failed to close the socket")
             sys.exit()
 
-        print("Server disconnected, listening for offer requests...")
+        print(yellowColor + "Server disconnected, listening for offer requests...")
 
         # Runs the Client once again
         self.restart()
@@ -107,7 +112,7 @@ class Client:
         try:
             self.tcpSocket.connect((self.serverIP, self.serverPort))  # TODO: what happens if the server is not listening anymore
         except socket.error:
-            print("Failed to connect to the server with IP " + str(self.serverIP))
+            print(failColor + "Failed to connect to the server with IP " + str(self.serverIP))
             return
 
         # Sending the server the client name
@@ -136,7 +141,7 @@ class Client:
         except:
             self.closeSocketsAndRestart()
 
-        print(msgFromServer.decode('UTF-8'))
+        print(blueColor + msgFromServer.decode('UTF-8'))
         teamOneGameThread = Thread(target=self.answerToServer)
         teamOneGameThread.start()
 
@@ -147,6 +152,7 @@ class Client:
         self.serverIP = None
         self.serverPort = None
         self.serverConnected = 0
+        self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         if self.stopTheGame:  # Check if to Stop the Client
 
@@ -155,7 +161,7 @@ class Client:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
                 self.udpSocket.close()
             except:  # socket.error:
-                print("Failed to close the socket")
+                print(failColor + "Failed to close the socket")
                 sys.exit()
 
             # Closing the tcpSocket
@@ -163,7 +169,7 @@ class Client:
                 self.tcpSocket.shutdown(socket.SHUT_RDWR)
                 self.tcpSocket.close()
             except:  # socket.error:
-                print("Failed to close the socket")
+                print(failColor + "Failed to close the socket")
                 sys.exit()
         else:
             self.searchForServer()  # Continue in running the Client
