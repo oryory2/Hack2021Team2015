@@ -8,7 +8,6 @@ from threading import Thread
 # TODO : select(?)
 # TODO: handle exception of failed message, when we send to a client a msg and get exeption
 # TODO : catch
-# TODO : question with only one digit answer
 
 
 class Server:
@@ -40,20 +39,20 @@ class Server:
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        except: #socket.error
+        except: #  socket.error:
             print("Failed to create server UDP socket")
             sys.exit()
 
         try:
             self.ip = socket.gethostbyname(socket.gethostname())
-        except: # socket.gaierror
+        except:  # socket.gaierror:
             print("Hostname server couldn't be resolved")
             sys.exit()
 
         # Initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except: #socket.error:
+        except:  # socket.error:
             print("Failed to create server TCP socket")
             sys.exit()
         self.tcpSocket.bind((self.host, self.tPortNumber))
@@ -104,8 +103,15 @@ class Server:
         print("The Game has been started!")
 
         # Creating the math question
-        numOne = random.randint(0, 100)
-        numTwo = random.randint(0, 100)
+        numOne = random.randint(0, 5)
+        numTwo = random.randint(0, 4)
+
+        tempOne = numOne
+        tempTwo = numTwo
+
+        numOne = max(tempOne, tempTwo)
+        numTwo = min(tempOne, tempTwo)
+
 
         randomMathOperator = random.randint(0, 1)
         if randomMathOperator > 0.5:
@@ -194,7 +200,7 @@ class Server:
         try:
             self.teamOneSocket.shutdown(socket.SHUT_RDWR)
             self.teamOneSocket.close()
-        except socket.error:
+        except:  # socket.error:
             print("Failed to close the socket")
             sys.exit()
 
@@ -202,7 +208,7 @@ class Server:
         try:
             self.teamTwoSocket.shutdown(socket.SHUT_RDWR)
             self.teamTwoSocket.close()
-        except socket.error:
+        except:  # socket.error:
             print("Failed to close the socket")
             sys.exit()
 
@@ -260,7 +266,7 @@ class Server:
         while not self.answer and stopper <= 10:  # While none of both teams has answered, and 10 second didn't pass yet
             try:
                 teamAnswer = teamSocket.recv(1024)
-            except:
+            except: ####################################################
                 pass
 
             if teamAnswer is not None:  # The team has answered
@@ -319,7 +325,7 @@ class Server:
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
                 self.udpSocket.close()
-            except socket.error:
+            except:  # socket.error:
                 print("Failed to close the socket")
                 sys.exit()
 
@@ -327,7 +333,7 @@ class Server:
             try:
                 self.tcpSocket.shutdown(socket.SHUT_RDWR)
                 self.tcpSocket.close()
-            except socket.error:
+            except:  # socket.error:
                 print("Failed to close the socket")
                 sys.exit()
         else:
