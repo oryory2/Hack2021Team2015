@@ -126,8 +126,8 @@ class Server:
         self.teamTwoSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
 
         # Creating two Threads that will take answer from the two Clients
-        teamOneGameThread = Thread(target=self.getAnswerFromTeam(self.teamOneSocket, 1), daemon=True)
-        teamTwoGameThread = Thread(target=self.getAnswerFromTeam(self.teamTwoSocket, 2), daemon=True)
+        teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))
+        teamTwoGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamTwoSocket, 2,))
 
         teamOneGameThread.start()
         teamTwoGameThread.start()
@@ -189,13 +189,9 @@ class Server:
             self.printResultDraw(result)
             self.updateTeamsTable_draw()
 
+        # Prints the best three teams on the server until now (by the win percentage)
         bestTeamsMsg = self.showBestTeams()
-
         print(bestTeamsMsg)
-
-        self.teamOneSocket.send(bytes(bestTeamsMsg, 'UTF-8'))
-        self.teamTwoSocket.send(bytes(bestTeamsMsg, 'UTF-8'))
-
 
         # Closing the first tcpSocket
         try:

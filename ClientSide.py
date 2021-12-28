@@ -138,7 +138,7 @@ class Client:
             try:
                 self.udpSocket.shutdown(socket.SHUT_RDWR)
                 self.udpSocket.close()
-            except: # socket.error:
+            except:  # socket.error:
                 print("Failed to close the socket")
                 sys.exit()
 
