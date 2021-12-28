@@ -2,7 +2,7 @@ import msvcrt
 import select
 import socket
 import sys
-from datetime import time
+from datetime import datetime
 from threading import Thread
 
 
@@ -50,35 +50,35 @@ class Client:
             self.serverPort = int(msgFromServer.hex()[10:], 16)
 
             # Verify all the different parameters from the Server
-            if self.magicCookie != int(magicCookie) or self.messageType != int(messageType):
+            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):
                 continue
             print("Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
             self.connectToServer()  # Try to connect to the specific Server
 
         # Connected the Server successfully, and now starting to play
-        # self.startToPlay() #######
+        self.startToPlay() #######
 
-        whileFlag = True
-        while whileFlag:
-            inputOrOutput = [self.tcpSocket, sys.stdin]
-            inReady, outReady, exceptReady = select.select(inputOrOutput, [], [])
-
-            for message in inReady:
-                if message == self.tcpSocket:  # Received the message from the server before answering
-                    msg = message.recv(1024).decode()
-                    print(msg)
-                    whileFlag = False
-                    break
-                if message == sys.stdin:  # Sent the answer to the server before the second Client or before 10 seconds passed
-                    answer = sys.stdin.readline()
-                    print("My answer is: " + answer)
-                    self.tcpSocket.sendall(bytes(answer, 'UTF-8'))
+        # whileFlag = True
+        # while whileFlag:
+        #     inputOrOutput = [self.tcpSocket, sys.stdin]
+        #     inReady, outReady, exceptReady = select.select(inputOrOutput, [], [])
+        #
+        #     for message in inReady:
+        #         if message == self.tcpSocket:  # Received the message from the server before answering
+        #             msg = message.recv(1024).decode()
+        #             print(msg)
+        #             whileFlag = False
+        #             break
+        #         if message == sys.stdin:  # Sent the answer to the server before the second Client or before 10 seconds passed
+        #             answer = sys.stdin.readline()
+        #             print("My answer is: " + answer)
+        #             self.tcpSocket.sendall(bytes(answer, 'UTF-8'))
 
 
 
         # The game has been finished, getting the final result
-        # msgFromServer = self.tcpSocket.recv(1024) #######
-        # print(msgFromServer.decode('UTF-8')) #######
+        msgFromServer = self.tcpSocket.recv(1024) #######
+        print(msgFromServer.decode('UTF-8')) #######
 
         # Closing the tcpSocket
         try:
@@ -106,23 +106,25 @@ class Client:
         self.tcpSocket.send(bytes(self.name, 'UTF-8'))
         self.serverConnected = 1
 
+    # Answer the math question
+    def answerToServer(self):
+
+        currentTime = datetime.now()
+
+        while (datetime.now() - currentTime).seconds <= 10:
+            answer = input('Answer as fast as you can: ')
+            self.tcpSocket.send(bytes(answer, 'UTF-8'))
+            return
+        #  answer = msvcrt.getch('Answer as fast as you can: ')
 
     def startToPlay(self):
 
         # Receiving and printing the question from the Server
         msgFromServer = self.tcpSocket.recv(1024)
         print(msgFromServer.decode('UTF-8'))
-        teamOneGameThread = Thread(target=self.asnwerToServer, args=())
+        teamOneGameThread = Thread(target=self.answerToServer)
         teamOneGameThread.start()
 
-        # Answer the math question
-    def answerToServer(self):
-
-        t0 = time.time()
-        while time.time() - t0 < 10:
-            answer = input('Answer as fast as you can: ')
-            self.tcpSocket.send(answer)
-        #  answer = msvcrt.getch('Answer as fast as you can: ')
 
     def restart(self):
 
@@ -149,7 +151,7 @@ class Client:
                 print("Failed to close the socket")
                 sys.exit()
         else:
-            self.startToPlay()  # Continue in running the Client
+            self.searchForServer()  # Continue in running the Client
 
     def stopTheGameFunc(self):  # Function that stops the Client
         self.stopTheGame = True

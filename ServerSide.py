@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 import time
 import socket
 import sys
@@ -83,11 +84,12 @@ class Server:
                 self.teamOneSocket, self.teamOneAddress = self.tcpSocket.accept()  # Wait for the first Client to connect
                 self.teamOneName = self.teamOneSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the first Team
                 self.clientsConnected = self.clientsConnected + 1
-
+                print("First client connected")
             else:
                 self.teamTwoSocket, self.teamTwoAddress = self.tcpSocket.accept()  # Wait for the second Client to connect
                 self.teamTwoName = self.teamTwoSocket.recv(1024).decode('UTF-8')  # receive the TeamName of the second Team
                 self.clientsConnected = self.clientsConnected + 1
+                print("Second client connected")
         self.startTheGame()
 
 
@@ -133,12 +135,13 @@ class Server:
         teamOneGameThread.start()
         teamTwoGameThread.start()
 
+        time.sleep(10)
+
         teamOneGameThread.join()
         teamTwoGameThread.join()
 
         if self.answerOne is not None and self.answerTwo is not None:
             deltaTime = (time.strptime(self.answerOneTime, '%H:%M') - time.strptime(self.answerTwoTime, '%H:%M'))/12
-
 
             if deltaTime.seconds < 0:  # teamOne answered first
 
@@ -223,7 +226,7 @@ class Server:
         else:
             self.teamsTable[winnerTeam] = (1, 1)
         if loserTeam in self.teamsTable:
-            self.teamsTable[loserTeam] -= (self.teamsTable[loserTeam][0] + 1, self.teamsTable[loserTeam][1])  # (gamesPlayed, gamesWon)
+            self.teamsTable[loserTeam] = (self.teamsTable[loserTeam][0] + 1, self.teamsTable[loserTeam][1])  # (gamesPlayed, gamesWon)
         else:
             self.teamsTable[loserTeam] = (1, 0)
 
@@ -262,9 +265,10 @@ class Server:
     def getAnswerFromTeam(self, teamSocket, teamNumber):
 
         teamSocket.setblocking(False)
-        stopper = time.time()
+        currentTime = datetime.now()
+        teamAnswer = None
 
-        while not self.answer and stopper <= 10:  # While none of both teams has answered, and 10 second didn't pass yet
+        while (self.answer is None) and ((datetime.now() - currentTime).seconds <= 10):  # While none of both teams has answered, and 10 second didn't pass yet
             try:
                 teamAnswer = teamSocket.recv(1024)
             except: ####################################################
@@ -274,10 +278,10 @@ class Server:
                 self.answer = True
                 if teamNumber == 1:  # teamOne has answered
                     self.answerOne = teamAnswer
-                    self.answerOneTime = time.now()
+                    self.answerOneTime = datetime.now()
                 if teamNumber == 2:  # teamTwo has answered
                     self.answerTwo = teamAnswer
-                    self.answerTwoTime = time.now()
+                    self.answerTwoTime = datetime.now()
 
 
 
