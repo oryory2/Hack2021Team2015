@@ -114,7 +114,7 @@ class Client:
             answer = input('Answer as fast as you can: ')
             self.tcpSocket.send(bytes(answer, 'UTF-8'))
             return
-        #  answer = msvcrt.getch('Answer as fast as you can: ')
+
 
     def startToPlay(self):
 

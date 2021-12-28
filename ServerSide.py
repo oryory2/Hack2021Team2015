@@ -190,8 +190,7 @@ class Server:
             self.updateTeamsTable_draw()
 
         # Prints the best three teams on the server until now (by the win percentage)
-        bestTeamsMsg = self.showBestTeams()
-        print(bestTeamsMsg)
+        self.showBestTeams()
 
         # Closing the first tcpSocket
         try:
@@ -259,48 +258,41 @@ class Server:
 
         teamSocket.setblocking(False)
         currentTime = datetime.now()
-        teamAnswer = None
 
-        while (self.answer is None) and ((datetime.now() - currentTime).seconds <= 10):  # While none of both teams has answered, and 10 second didn't pass yet
+        while (datetime.now() - currentTime).seconds <= 10:  # While none of both teams has answered, and 10 second didn't pass yet
             try:
                 teamAnswer = teamSocket.recv(1024)
-            except: ####################################################
+            except:
                 pass
 
             if teamAnswer is not None:  # The team has answered
-                self.answer = True
+                print(teamAnswer)
                 if teamNumber == 1:  # teamOne has answered
                     self.answerOne = teamAnswer
                     self.answerOneTime = datetime.now()
                 if teamNumber == 2:  # teamTwo has answered
                     self.answerTwo = teamAnswer
                     self.answerTwoTime = datetime.now()
+                return
+
 
 
 
     # Function that shows the best three teams played on the server until now
     def showBestTeams(self):
-        calcDict = {}
-        for k, v in self.teamsTable.items():
-            calcDict[k] = v[1]/v[0]
 
-        sortedDict = sorted(calcDict.items(), key=lambda x: x[1])
+        sortedLst = sorted(self.teamsTable.items(), key=lambda tup: tup[1][1], reverse=True)
+        if len(sortedLst) == 1:
+            print("The best teams on the server are:\n1. " + sortedLst[0][0] + " - wins: " + str(sortedLst[0][1][1]))
 
-        team1 = sortedDict[0][1] * 100
-
-        #  Win percentage of the teams
-        if len(sortedDict) == 1:
-            return ("The team in the server are:\n1. " + sortedDict[0][0] + " - win percentages: " + str(team1))
-
-        elif len(sortedDict) == 2:
-            team2 = sortedDict[1][1] * 100
-            return ("The top 3 teams on the server are:\n1. " + sortedDict[0][0] + " - win percentages: " + str(team1) + "\n2. " +
-                    sortedDict[1][0] + " - win percentages: " + str(team2))
+        elif len(sortedLst) == 2:
+            print("The best teams on the server are:\n1. " + sortedLst[0][0] + " - wins: " + str(sortedLst[0][1][1]) + "\n2. " +
+            sortedLst[1][0] + " - wins: " + str(sortedLst[1][1][1]))
         else:
-            team2 = sortedDict[1][1] * 100
-            team3 = sortedDict[2][1] * 100
-            return ("The top 3 teams on the server are:\n1. " + sortedDict[0][0] + " - win percentages: " + str(team1) + "\n2. " +
-            sortedDict[1][0] + " - win percentages: " + str(team2) + "\n3. " + sortedDict[2][0] + " - win percentages: " + str(team3))
+            print("The best teams on the server are:\n1. " + sortedLst[0][0] + " - wins: " + str(
+                sortedLst[0][1][1]) + "\n2. " + sortedLst[1][0] + " - wins: " + str(sortedLst[1][1][1]) + "\n3. " + sortedLst[2][0] + " - wins: " + str(sortedLst[2][1][1]))
+
+
 
     def restartServer(self):
 
