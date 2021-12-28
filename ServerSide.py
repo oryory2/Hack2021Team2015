@@ -40,20 +40,20 @@ class Server:
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        except socket.error:
+        except: #socket.error
             print("Failed to create server UDP socket")
             sys.exit()
 
         try:
             self.ip = socket.gethostbyname(socket.gethostname())
-        except socket.gaierror:
+        except: # socket.gaierror
             print("Hostname server couldn't be resolved")
             sys.exit()
 
         # Initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except socket.error:
+        except: #socket.error:
             print("Failed to create server TCP socket")
             sys.exit()
         self.tcpSocket.bind((self.host, self.tPortNumber))
