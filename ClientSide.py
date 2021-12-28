@@ -1,4 +1,5 @@
 import msvcrt
+import select
 import socket
 import sys
 from datetime import time
@@ -32,7 +33,7 @@ class Client:
         # Initializing the TCP Socket
         try:
             self.tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except: # socket.error:
+        except:  # socket.error:
             print("Failed to create server TCP socket")
             sys.exit()
 
@@ -55,17 +56,35 @@ class Client:
             self.connectToServer()  # Try to connect to the specific Server
 
         # Connected the Server successfully, and now starting to play
-        self.startToPlay()
+        # self.startToPlay() #######
+
+        whileFlag = True
+        while whileFlag:
+            inputOrOutput = [self.tcpSocket, sys.stdin]
+            inReady, outReady, exceptReady = select.select(inputOrOutput, [], [])
+
+            for message in inReady:
+                if message == self.tcpSocket:  # Received the message from the server before answering
+                    msg = message.recv(1024).decode()
+                    print(msg)
+                    whileFlag = False
+                    break
+                if message == sys.stdin:  # Sent the answer to the server before the second Client or before 10 seconds passed
+                    answer = sys.stdin.readline()
+                    print("My answer is: " + answer)
+                    self.tcpSocket.sendall(bytes(answer, 'UTF-8'))
+
+
 
         # The game has been finished, getting the final result
-        msgFromServer = self.tcpSocket.recv(1024)
-        print(msgFromServer.decode('UTF-8'))
+        # msgFromServer = self.tcpSocket.recv(1024) #######
+        # print(msgFromServer.decode('UTF-8')) #######
 
         # Closing the tcpSocket
         try:
             self.tcpSocket.shutdown(socket.SHUT_RDWR)
             self.tcpSocket.close()
-        except: # socket.error:
+        except:  # socket.error:
             print("Failed to close the socket")
             sys.exit()
 
@@ -97,8 +116,8 @@ class Client:
         teamOneGameThread.start()
 
         # Answer the math question
-    def answerToServer(self):  # TODO: understand the msvcrt.getch()
-                               # TODO: what happens if the other player answered first
+    def answerToServer(self):
+
         t0 = time.time()
         while time.time() - t0 < 10:
             answer = input('Answer as fast as you can: ')

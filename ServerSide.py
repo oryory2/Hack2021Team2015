@@ -7,7 +7,8 @@ from threading import Thread
 # TODO : getch with multithread
 # TODO : select(?)
 # TODO: handle exception of failed message, when we send to a client a msg and get exeption
-# TODO : catch
+# TODO correct the broadcast dest ip
+# TODO: check what should be the port number
 
 
 class Server:
@@ -16,7 +17,7 @@ class Server:
 
         # Initializing the Square parameters
         self.uPortNumber = 13117
-        self.tPortNumber = tcpPort  # TODO: check what should be the port number
+        self.tPortNumber = tcpPort
         self.host = ''
         self.teamOneName = None
         self.teamTwoName = None
@@ -93,7 +94,7 @@ class Server:
 
     def broadcastMsg(self, msg):  # Function to send the broadcastMsg via UDP transport
         while self.clientsConnected != 2:
-            self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))  # TODO correct the broadcast dest ip
+            self.udpSocket.sendto(msg, ('255.255.255.255', self.uPortNumber))
             time.sleep(1)  # Wait one second between messages
 
 
