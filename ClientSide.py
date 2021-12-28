@@ -76,9 +76,18 @@ class Client:
 
 
         # The game has been finished, getting the final result
-        msgFromServer = self.tcpSocket.recv(1024) #######
+        try:
+            msgFromServer = self.tcpSocket.recv(1024) #######
+        except:
+            print("Lost connection with the Server..")
+            self.closeSocketsAndRestart()
+
         print(msgFromServer.decode('UTF-8')) #######
 
+        # Closing socket and restart the Client
+        self.closeSocketsAndRestart()
+
+    def closeSocketsAndRestart(self):
         # Closing the tcpSocket
         try:
             self.tcpSocket.shutdown(socket.SHUT_RDWR)
@@ -112,14 +121,21 @@ class Client:
 
         while (datetime.now() - currentTime).seconds <= 10:
             answer = input('Answer as fast as you can: ')
-            self.tcpSocket.send(bytes(answer, 'UTF-8'))
+            try:
+                self.tcpSocket.send(bytes(answer, 'UTF-8'))
+            except:
+                self.closeSocketsAndRestart()
             return
 
 
     def startToPlay(self):
 
         # Receiving and printing the question from the Server
-        msgFromServer = self.tcpSocket.recv(1024)
+        try:
+            msgFromServer = self.tcpSocket.recv(1024)
+        except:
+            self.closeSocketsAndRestart()
+
         print(msgFromServer.decode('UTF-8'))
         teamOneGameThread = Thread(target=self.answerToServer)
         teamOneGameThread.start()
@@ -151,6 +167,7 @@ class Client:
                 sys.exit()
         else:
             self.searchForServer()  # Continue in running the Client
+
 
     def stopTheGameFunc(self):  # Function that stops the Client
         self.stopTheGame = True

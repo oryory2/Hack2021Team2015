@@ -158,8 +158,8 @@ class Server:
 
 
         # Welcome the two Teams and ask the math question
-        self.teamOneSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
-        self.teamTwoSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
+        self.teamOneSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n""Teams: \n1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
+        self.teamTwoSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n""Teams: \n1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
 
         # Creating two Threads that will take answer from the two Clients
         teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))
@@ -206,6 +206,8 @@ class Server:
 
         # Prints the best three teams on the server until now (by the win percentage)
         self.showBestTeams()
+
+        # Closing sockets and restart the server
         self.closeSocketsAndRestart()
 
 
