@@ -49,7 +49,7 @@ class Client:
             self.serverPort = int(msgFromServer.hex()[10:], 16)
 
             # Verify all the different parameters from the Server
-            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):  # TODO: understand if needed or not
+            if self.magicCookie != int(magicCookie) or self.messageType != int(messageType):
                 continue
             print("Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
             self.connectToServer()  # Try to connect to the specific Server

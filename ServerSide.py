@@ -4,11 +4,11 @@ import socket
 import sys
 from threading import Thread
 
-
-
-
-#  TODO: handle exception of failed message
-
+# TODO : getch with multithread
+# TODO : select(?)
+# TODO: handle exception of failed message, when we send to a client a msg and get exeption
+# TODO : catch
+# TODO : question with only one digit answer
 
 
 class Server:
