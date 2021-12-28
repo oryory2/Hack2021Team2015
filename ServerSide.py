@@ -257,23 +257,25 @@ class Server:
     def getAnswerFromTeam(self, teamSocket, teamNumber):
 
         teamSocket.setblocking(False)
-        currentTime = datetime.now()
+        t0 = datetime.now()
 
-        while (datetime.now() - currentTime).seconds <= 10:  # While none of both teams has answered, and 10 second didn't pass yet
+        while (datetime.now() - t0).seconds <= 10:  # While none of both teams has answered, and 10 second didn't pass yet
             try:
                 teamAnswer = teamSocket.recv(1024)
             except:
-                pass
+                continue
 
-            if teamAnswer is not None:  # The team has answered
+            if teamAnswer != None:  # The team has answered
                 print(teamAnswer)
                 if teamNumber == 1:  # teamOne has answered
                     self.answerOne = teamAnswer
                     self.answerOneTime = datetime.now()
+                    return
                 if teamNumber == 2:  # teamTwo has answered
                     self.answerTwo = teamAnswer
                     self.answerTwoTime = datetime.now()
-                return
+                    return
+
 
 
 
