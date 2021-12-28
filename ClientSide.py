@@ -7,10 +7,10 @@ from threading import Thread
 
 class Client:
 
-    def __init__(self):
+    def __init__(self, name):
 
         # Initializing the Square parameters
-        self.name = "None"
+        self.name = name
         self.port = 13117
         self.host = ''
         self.magicCookie = 0xabcddcba
@@ -24,7 +24,7 @@ class Client:
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        except: # socket.error:
+        except:  # socket.error:
             print("Failed to create client UDP socket")
             sys.exit()
         self.udpSocket.bind((self.host, self.port))
@@ -146,7 +146,7 @@ class Client:
             try:
                 self.tcpSocket.shutdown(socket.SHUT_RDWR)
                 self.tcpSocket.close()
-            except: # socket.error:
+            except:  # socket.error:
                 print("Failed to close the socket")
                 sys.exit()
         else:
@@ -158,5 +158,5 @@ class Client:
 
 
 if __name__ == "__main__":
-    client = Client()
+    client = Client("two")
     client.searchForServer()

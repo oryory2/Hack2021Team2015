@@ -26,8 +26,6 @@ class Server:
         self.answerOne = None
         self.answerTwo = None
         self.answer = None
-        self.answerOneTime = None
-        self.answerTwoTime = None
         self.stopTheGame = False
         self.teamsTable = {}
         self.magicCookie = 0xabcddcba
@@ -44,7 +42,7 @@ class Server:
         try:
             self.udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             self.udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        except: #  socket.error:
+        except:  # socket.error:
             print("Failed to create server UDP socket")
             sys.exit()
 
@@ -97,9 +95,47 @@ class Server:
             time.sleep(1)  # Wait one second between messages
 
 
+
+    def checkConnection(self):  # Function for handling Clients that disconnect from the server
+        oneDisconnected = False
+        TwoDisconnected = False
+
+        try:
+            self.teamOneSocket.sendall("".encode())
+        except:
+            oneDisconnected = True
+        try:
+            self.teamTwoSocket.sendall("".encode())
+        except:
+            TwoDisconnected = True
+
+
+        if oneDisconnected and TwoDisconnected:  # Both Clients disconnected from the server
+            print("Both Teams disconnected, restarting Server..")
+            self.closeSocketsAndRestart()
+
+        if oneDisconnected:
+            print("Team " + str(self.teamOneName) + " has disconnected from the server, Team " + str(self.teamTwoName) + " won the match")
+            self.closeSocketsAndRestart()
+
+        if TwoDisconnected:
+            print("Team " + str(self.teamTwoName) + " has disconnected from the server, Team " + str(self.teamOneName) + " won the match")
+            self.closeSocketsAndRestart()
+
+
+
+
+
+
+
     def startTheGame(self):
 
         time.sleep(10)  # wait 10 seconds until the start of the game
+
+        #  Check the connection with the Clients
+        self.checkConnection()
+
+        # Start the game
         print("The Game has been started!")
 
         # Creating the math question
@@ -112,7 +148,6 @@ class Server:
         numOne = max(tempOne, tempTwo)
         numTwo = min(tempOne, tempTwo)
 
-
         randomMathOperator = random.randint(0, 1)
         if randomMathOperator > 0.5:
             mathMsg = "How much is " + str(numOne) + " + " + str(numTwo) + "?"
@@ -120,6 +155,7 @@ class Server:
         else:
             mathMsg = "How much is " + str(numOne) + " - " + str(numTwo) + "?"
             result = numOne - numTwo
+
 
         # Welcome the two Teams and ask the math question
         self.teamOneSocket.sendall(bytes("Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n ""Teams: \n 1. " + str(self.teamOneName) + "\n2. " + str(self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg, 'UTF-8'))
@@ -132,13 +168,15 @@ class Server:
         teamOneGameThread.start()
         teamTwoGameThread.start()
 
-        #time.sleep(10)
-
         teamOneGameThread.join()
         teamTwoGameThread.join()
 
 
-        if self.answerOne is not None:  # teamOne answered first
+        #  Check the connection with the Clients
+        self.checkConnection()
+
+        # teamOne answered first
+        if self.answerOne is not None:
 
             if result == self.answerOne:  # The first Team has won
                 self.printResultWin(self.teamOneName, result)
@@ -148,7 +186,9 @@ class Server:
                 self.printResultWin(self.teamTwoName, result)
                 self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
-        elif self.answerTwo is not None:  # teamTwo answered first
+
+        # teamTwo answered first
+        elif self.answerTwo is not None:
 
             if result == self.answerTwo:  # The second Team has won
                 self.printResultWin(self.teamTwoName, result)
@@ -158,15 +198,19 @@ class Server:
                 self.printResultWin(self.teamOneName, result)
                 self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
 
-        else:  # Draw - none of the teams answered on time
+
+        # Draw - none of the teams answered on time
+        else:
             self.printResultDraw(result)
             self.updateTeamsTable_draw()
 
         # Prints the best three teams on the server until now (by the win percentage)
         self.showBestTeams()
+        self.closeSocketsAndRestart()
 
 
 
+    def closeSocketsAndRestart(self):
 
         # Closing the first tcpSocket
         try:
@@ -213,8 +257,8 @@ class Server:
     def printResultWin(self, winnerTeam, result):  # not Draw
 
         print("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
-        self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
-        self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
+        self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(winnerTeam), 'UTF-8'))
+        self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(winnerTeam), 'UTF-8'))
 
 
 
@@ -238,19 +282,14 @@ class Server:
                 continue
 
             if teamAnswer != None:  # The team has answered
-                print(teamAnswer)
                 if teamNumber == 1:  # teamOne has answered
                     self.answerOne = teamAnswer
-                    self.answerOneTime = datetime.now()
                     self.answer = teamAnswer
                     return
                 if teamNumber == 2:  # teamTwo has answered
                     self.answerTwo = teamAnswer
-                    self.answerTwoTime = datetime.now()
                     self.answer = teamAnswer
                     return
-
-
 
 
 
@@ -259,14 +298,14 @@ class Server:
 
         sortedLst = sorted(self.teamsTable.items(), key=lambda tup: tup[1][1], reverse=True)
         if len(sortedLst) == 1:
-            print("The best teams on the server are:\n1. " + sortedLst[0][0] + " - wins: " + str(sortedLst[0][1][1]))
+            print("The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(sortedLst[0][1][1]))
 
         elif len(sortedLst) == 2:
-            print("The best teams on the server are:\n1. " + sortedLst[0][0] + " - wins: " + str(sortedLst[0][1][1]) + "\n2. " +
-            sortedLst[1][0] + " - wins: " + str(sortedLst[1][1][1]))
+            print("The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(sortedLst[0][1][1]) + "\n2. " +
+            str(sortedLst[1][0]) + " - wins: " + str(sortedLst[1][1][1]))
         else:
-            print("The best teams on the server are:\n1. " + sortedLst[0][0] + " - wins: " + str(
-                sortedLst[0][1][1]) + "\n2. " + sortedLst[1][0] + " - wins: " + str(sortedLst[1][1][1]) + "\n3. " + sortedLst[2][0] + " - wins: " + str(sortedLst[2][1][1]))
+            print("The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(
+                sortedLst[0][1][1]) + "\n2. " + str(sortedLst[1][0]) + " - wins: " + str(sortedLst[1][1][1]) + "\n3. " + str(sortedLst[2][0]) + " - wins: " + str(sortedLst[2][1][1]))
 
 
 
