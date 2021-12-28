@@ -132,38 +132,11 @@ class Server:
         teamOneGameThread.start()
         teamTwoGameThread.start()
 
-        time.sleep(10)
+        #time.sleep(10)
 
         teamOneGameThread.join()
         teamTwoGameThread.join()
 
-        if self.answerOne is not None and self.answerTwo is not None:
-            deltaTime = (time.strptime(self.answerOneTime, '%H:%M') - time.strptime(self.answerTwoTime, '%H:%M'))/12
-
-            if deltaTime.seconds < 0:  # teamOne answered first
-
-                if self.answerOne is not None:
-                    if result == self.answerOne:  # The first Team has won
-                        self.printResultWin(self.teamOneName, result)
-                        self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
-
-                    else:  # The second Team has won
-                        self.printResultWin(self.teamTwoName, result)
-                        self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
-
-            elif deltaTime.seconds > 0:  # teamTwo answered first
-
-                if result == self.answerTwo:  # The second Team has won
-                    self.printResultWin(self.teamTwoName, result)
-                    self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
-
-                else:  # The first Team has won
-                    self.printResultWin(self.teamOneName, result)
-                    self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
-            else:
-                # Draw
-                self.printResultDraw(result)
-                self.updateTeamsTable_draw()
 
         if self.answerOne is not None:  # teamOne answered first
 
@@ -191,6 +164,9 @@ class Server:
 
         # Prints the best three teams on the server until now (by the win percentage)
         self.showBestTeams()
+
+
+
 
         # Closing the first tcpSocket
         try:
@@ -237,20 +213,16 @@ class Server:
     def printResultWin(self, winnerTeam, result):  # not Draw
 
         print("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam)
-        self.teamOneSocket.sendall(
-            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
-        self.teamTwoSocket.sendall(
-            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
+        self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
+        self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + winnerTeam, 'UTF-8'))
 
 
 
     def printResultDraw(self, result):  # Draw
 
         print("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!")
-        self.teamOneSocket.sendall(
-            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
-        self.teamTwoSocket.sendall(
-            bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
+        self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
+        self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
 
 
 
@@ -259,7 +231,7 @@ class Server:
         teamSocket.setblocking(False)
         t0 = datetime.now()
 
-        while (datetime.now() - t0).seconds <= 10:  # While none of both teams has answered, and 10 second didn't pass yet
+        while (datetime.now() - t0).seconds <= 10 and self.answer is None:  # While none of both teams has answered, and 10 second didn't pass yet
             try:
                 teamAnswer = teamSocket.recv(1024)
             except:
@@ -270,10 +242,12 @@ class Server:
                 if teamNumber == 1:  # teamOne has answered
                     self.answerOne = teamAnswer
                     self.answerOneTime = datetime.now()
+                    self.answer = teamAnswer
                     return
                 if teamNumber == 2:  # teamTwo has answered
                     self.answerTwo = teamAnswer
                     self.answerTwoTime = datetime.now()
+                    self.answer = teamAnswer
                     return
 
 
@@ -309,6 +283,7 @@ class Server:
         self.teamTwoAddress = None
         self.answerOne = None
         self.answerTwo = None
+        self.answer = None
         self.clientsConnected = 0
 
         if self.stopTheGame:  # Check if to Stop the Server
