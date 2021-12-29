@@ -28,6 +28,7 @@ class Server:
         self.answerTwo = None
         self.answer = None
         self.stopTheGame = False
+        self.broadcastStopped = False
         self.teamsTable = {}
         self.magicCookie = 0xabcddcba
         self.messageType = 0x2
@@ -79,20 +80,31 @@ class Server:
         broadcastThread = Thread(target=self.broadcastMsg)
         broadcastThread.start()
 
+        self.tcpSocket.settimeout(10)  # get exception after 10 seconds
+
         # Wait for two Clients to connect the Server
-        while self.clientsConnected < 2:
+        while not self.broadcastStopped:
             if self.clientsConnected == 0:
                 self.teamOneSocket, addressOne = self.tcpSocket.accept()  # Wait for the first Client to connect
                 self.teamOneName = self.teamOneSocket.recv(1024).decode(
                     'UTF-8')  # receive the TeamName of the first Team
                 self.clientsConnected = self.clientsConnected + 1
                 print(yellowColor + "First client connected..")
-            else:
+            elif self.clientsConnected == 1:
                 self.teamTwoSocket, addressTwo = self.tcpSocket.accept()  # Wait for the second Client to connect
                 self.teamTwoName = self.teamTwoSocket.recv(1024).decode(
                     'UTF-8')  # receive the TeamName of the second Team
                 self.clientsConnected = self.clientsConnected + 1
                 print(yellowColor + "Second client connected..")
+            else:
+                try:
+                    clientToDeleteSocket, address = self.tcpSocket.accept()  # Wait for the first Client to connect
+                    clientToDeleteSocket.shutdown(socket.SHUT_RDWR)
+                    clientToDeleteSocket.close()
+                except:
+                    self.broadcastStopped = True
+                    break
+
         self.startTheGame()
 
 
@@ -100,15 +112,17 @@ class Server:
     # Function to send the broadcastMsg via UDP transport
     def broadcastMsg(self):
         while self.clientsConnected != 2:
-            self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))
+            self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))  # 2 first byres - subnet
             time.sleep(1)  # Wait one second between messages
+
+
 
 
 
     # Function that runs after the two Clients connected to the Server
     def startTheGame(self):
 
-        time.sleep(10)  # wait 10 seconds until the start of the game
+        # time.sleep(10)  # wait 10 seconds until the start of the game
 
         #  Check the connection with the Clients
         self.checkConnection()
@@ -358,6 +372,7 @@ class Server:
         self.answerOne = None
         self.answerTwo = None
         self.answer = None
+        self.broadcastStopped = False
         self.clientsConnected = 0
 
         if self.stopTheGame:  # Check if to Stop the Server
