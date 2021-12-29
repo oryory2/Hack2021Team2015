@@ -125,7 +125,7 @@ class Server:
     def broadcastMsg(self):
         while self.clientsConnected != 2:
             if self.local:  # Run on windows
-                self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))  # 2 first byres - subnet
+                self.udpSocket.sendto(self.broadMsg, ('172.99.255.255', self.uPortNumber))  # 2 first byres - subnet
 
             else:  # Run on linux
                 self.udpSocket.sendto(self.broadMsg, (self.subnetBroadcast, self.uPortNumber))  # 2 first byres - subnet
