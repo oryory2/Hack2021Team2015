@@ -48,14 +48,15 @@ class Client:
             print(serverInfo)
             try:
                 msgParts = struct.unpack("IbH", msgFromServer)
+
+                # Extract the data from the ServerMsgg
+                self.serverIP = serverInfo[0]
+                magicCookie = msgParts[0]
+                messageType = msgParts[1]
+                self.serverPort = msgParts[2]
+
             except:
                 self.closeSocketsAndRestart()
-
-            # Extract the data from the ServerMsgg
-            self.serverIP = serverInfo[0]
-            magicCookie = msgParts[0]
-            messageType = msgParts[1]
-            self.serverPort = msgParts[2]
 
             # Verify all the different parameters from the Server
             if self.magicCookie != magicCookie or self.messageType != messageType:
@@ -128,8 +129,11 @@ class Client:
             return
 
         # Sending the server the client name
-        self.tcpSocket.send(bytes(self.name, 'UTF-8'))
-        self.serverConnected = 1
+        try:
+            self.tcpSocket.send(bytes(self.name, 'UTF-8'))
+            self.serverConnected = 1
+        except:
+            self.closeSocketsAndRestart()
 
     def restart(self):
 
