@@ -146,8 +146,8 @@ class Server:
             'UTF-8'))
 
         # Creating two Threads that will take answer from the two Clients
-        teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))
-        teamTwoGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamTwoSocket, 2,))
+        teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))  # החלפתי
+        teamTwoGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamTwoSocket, 2,))  # החלפתי
 
         teamOneGameThread.start()
         teamTwoGameThread.start()
@@ -156,12 +156,13 @@ class Server:
         teamTwoGameThread.join()
 
         #  Check the connection with the Clients
+
         self.checkConnection()
 
         # teamOne answered first
         if self.answerOne is not None:
-
-            if result == self.answerOne:  # The first Team has won
+            ans = self.answerOne.decode('UTF-8')[0]
+            if result == int(ans):  # The first Team has won
                 self.printResultWin(self.teamOneName, result)
                 self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
 
@@ -173,7 +174,8 @@ class Server:
         # teamTwo answered first
         elif self.answerTwo is not None:
 
-            if result == self.answerTwo:  # The second Team has won
+            ans = self.answerTwo.decode('UTF-8')[0]
+            if result == int(ans):  # The second Team has won
                 self.printResultWin(self.teamTwoName, result)
                 self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
@@ -201,8 +203,7 @@ class Server:
         teamSocket.setblocking(False)
         t0 = datetime.now()
 
-        while (
-                datetime.now() - t0).seconds <= 10 and self.answer is None:  # While none of both teams has answered, and 10 second didn't pass yet
+        while (datetime.now() - t0).seconds <= 10 and self.answer is None:  # While none of both teams has answered, and 10 second didn't pass yet
             try:
                 teamAnswer = teamSocket.recv(1024)
             except:
@@ -247,51 +248,43 @@ class Server:
     # Function that updating the TeamsTable in case of a win of one Team
     def updateTeamsTable_win(self, winnerTeam, loserTeam):
         if winnerTeam in self.teamsTable:
-            self.teamsTable[winnerTeam] = (
-                self.teamsTable[winnerTeam][0] + 1, self.teamsTable[winnerTeam][1] + 1)  # (gamesPlayed, gamesWon)
+            self.teamsTable[winnerTeam] = (self.teamsTable[winnerTeam][0] + 1, self.teamsTable[winnerTeam][1] + 1, (self.teamsTable[winnerTeam][1] + 1)/(self.teamsTable[winnerTeam][0] + 1))  # (gamesPlayed, gamesWon, win ratio)
         else:
-            self.teamsTable[winnerTeam] = (1, 1)
+            self.teamsTable[winnerTeam] = (1, 1, 1)
         if loserTeam in self.teamsTable:
-            self.teamsTable[loserTeam] = (
-                self.teamsTable[loserTeam][0] + 1, self.teamsTable[loserTeam][1])  # (gamesPlayed, gamesWon)
+            self.teamsTable[loserTeam] = (self.teamsTable[loserTeam][0] + 1, self.teamsTable[loserTeam][1], (self.teamsTable[loserTeam][1])/(self.teamsTable[loserTeam][0] + 1))  # (gamesPlayed, gamesWon, win ratio)
         else:
-            self.teamsTable[loserTeam] = (1, 0)
+            self.teamsTable[loserTeam] = (1, 0, 0)
 
 
 
     # Function that updating the TeamsTable in case of a draw between the teams
     def updateTeamsTable_draw(self):
         if self.teamOneName in self.teamsTable:
-            self.teamsTable[self.teamOneName] = (
-                self.teamsTable[self.teamOneName][0] + 1,
-                self.teamsTable[self.teamOneName][1])  # (gamesPlayed, gamesWon)
+            self.teamsTable[self.teamOneName] = (self.teamsTable[self.teamOneName][0] + 1, self.teamsTable[self.teamOneName][1], (self.teamsTable[self.teamOneName][1])/(self.teamsTable[self.teamOneName][0] + 1))  # (gamesPlayed, gamesWon, win ratio)
         else:
-            self.teamsTable[self.teamOneName] = (1, 0)
+            self.teamsTable[self.teamOneName] = (1, 0, 0)
+
         if self.teamTwoName in self.teamsTable:
-            self.teamsTable[self.teamTwoName] = (
-                self.teamsTable[self.teamTwoName][0] + 1,
-                self.teamsTable[self.teamTwoName][1])  # (gamesPlayed, gamesWon)
+            self.teamsTable[self.teamTwoName] = (self.teamsTable[self.teamTwoName][0] + 1, self.teamsTable[self.teamTwoName][1], (self.teamsTable[self.teamTwoName][1])/(self.teamsTable[self.teamTwoName][0] + 1))  # (gamesPlayed, gamesWon, win ratio)
         else:
-            self.teamsTable[self.teamTwoName] = (1, 0)
+            self.teamsTable[self.teamTwoName] = (1, 0, 0)
 
 
 
     # Function that shows the best three teams played on the server until now (by number of wins)
     def showBestTeams(self):
 
-        sortedLst = sorted(self.teamsTable.items(), key=lambda tup: tup[1][1], reverse=True)
+        sortedLst = sorted(self.teamsTable.items(), key=lambda tup: tup[1][2], reverse=True)
+
         if len(sortedLst) == 1:
-            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(
-                sortedLst[0][1][1]))
+            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - win ratio: " + str(100 * sortedLst[0][1][2]) + "%")
 
         elif len(sortedLst) == 2:
-            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(
-                sortedLst[0][1][1]) + "\n2. " +
-                  str(sortedLst[1][0]) + " - wins: " + str(sortedLst[1][1][1]))
+            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - win ratio: " + str(100 * sortedLst[0][1][2]) + "%" + "\n2. " +
+                  str(sortedLst[1][0]) + " - win ratio: " + str(100 * sortedLst[1][1][2]) + "%")
         else:
-            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - wins: " + str(
-                sortedLst[0][1][1]) + "\n2. " + str(sortedLst[1][0]) + " - wins: " + str(
-                sortedLst[1][1][1]) + "\n3. " + str(sortedLst[2][0]) + " - wins: " + str(sortedLst[2][1][1]))
+            print(yellowColor + "The best teams on the server are:\n1. " + str(sortedLst[0][0]) + " - win ratio: " + str(100 * sortedLst[0][1][2]) + "%" + "\n2. " + str(sortedLst[1][0]) + " - win ratio: " + str(100 * sortedLst[1][1][2]) + "%" + "\n3. " + str(sortedLst[2][0]) + " - win ratio: " + str(100 * sortedLst[2][1][2]) + "%")
 
 
 

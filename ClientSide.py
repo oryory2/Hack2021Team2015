@@ -125,7 +125,7 @@ class Client:
         currentTime = datetime.now()
 
         while (datetime.now() - currentTime).seconds <= 10:
-            answer = input('Answer as fast as you can: ')
+            answer = input('Answer as fast as you can: \n')
             try:
                 self.tcpSocket.send(bytes(answer, 'UTF-8'))
             except:
@@ -182,4 +182,5 @@ class Client:
 
 if __name__ == "__main__":
     client = Client("two")
+    print("two")
     client.searchForServer()
