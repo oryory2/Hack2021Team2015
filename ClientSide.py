@@ -46,7 +46,10 @@ class Client:
         while self.serverConnected < 1:
             msgFromServer, serverInfo = self.udpSocket.recvfrom(1024)  # wait for broadcast message from a Server
             print(serverInfo)
-            msgParts = struct.unpack("IbH", msgFromServer)
+            try:
+                msgParts = struct.unpack("IbH", msgFromServer)
+            except:
+                self.closeSocketsAndRestart()
 
             # Extract the data from the ServerMsgg
             self.serverIP = serverInfo[0]
