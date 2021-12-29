@@ -125,7 +125,7 @@ class Server:
     def broadcastMsg(self):
         while self.clientsConnected != 2:
             if self.local:  # Run on windows
-                self.udpSocket.sendto(self.broadMsg, ('172.99.255.255', self.uPortNumber))  # 2 first byres - subnet
+                self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))  # 2 first byres - subnet
 
             else:  # Run on linux
                 self.udpSocket.sendto(self.broadMsg, (self.subnetBroadcast, self.uPortNumber))  # 2 first byres - subnet
@@ -189,34 +189,37 @@ class Server:
         self.checkConnection()
 
         # teamOne answered first
-        if self.answerOne is not None:
-            ans = self.answerOne.decode('UTF-8')[0]
-            if result == int(ans):  # The first Team has won
-                self.printResultWin(self.teamOneName, result)
-                self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
+        try:
+            if self.answerOne is not None:
+                ans = self.answerOne.decode('UTF-8')
+                if result == int(ans):  # The first Team has won
+                    self.printResultWin(self.teamOneName, result)
+                    self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
 
-            else:  # The second Team has won
-                self.printResultWin(self.teamTwoName, result)
-                self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
-
-
-        # teamTwo answered first
-        elif self.answerTwo is not None:
-
-            ans = self.answerTwo.decode('UTF-8')[0]
-            if result == int(ans):  # The second Team has won
-                self.printResultWin(self.teamTwoName, result)
-                self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
-
-            else:  # The first Team has won
-                self.printResultWin(self.teamOneName, result)
-                self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
+                else:  # The second Team has won
+                    self.printResultWin(self.teamTwoName, result)
+                    self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
 
 
-        # Draw - none of the teams answered on time
-        else:
-            self.printResultDraw(result)
-            self.updateTeamsTable_draw()
+            # teamTwo answered first
+            elif self.answerTwo is not None:
+
+                ans = self.answerTwo.decode('UTF-8')
+                if result == int(ans):  # The second Team has won
+                    self.printResultWin(self.teamTwoName, result)
+                    self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)
+
+                else:  # The first Team has won
+                    self.printResultWin(self.teamOneName, result)
+                    self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)
+
+
+            # Draw - none of the teams answered on time
+            else:
+                self.printResultDraw(result)
+                self.updateTeamsTable_draw()
+        except:
+            self.closeSocketsAndRestart()
 
         # Prints the best three teams on the server until now (by the win percentage)
         self.showBestTeams()
