@@ -118,11 +118,31 @@ class Server:
                         self.broadcastStopped = True
                         break
         except:
-            self.closeSocketsAndRestart()
+            while not self.broadcastStopped:
+                try:
+                    self.connectTwoClients()
+                except:
+                    continue
+
 
         self.startTheGame()
 
-
+    def connectTwoClients(self):
+        while not self.broadcastStopped:
+            if self.clientsConnected == 0:
+                self.teamOneSocket, addressOne = self.tcpSocket.accept()  # Wait for the first Client to connect
+                self.teamOneName = self.teamOneSocket.recv(1024).decode(
+                    'UTF-8')  # receive the TeamName of the first Team
+                self.clientsConnected = self.clientsConnected + 1
+                print(yellowColor + "First client connected..")
+            elif self.clientsConnected == 1:
+                self.teamTwoSocket, addressTwo = self.tcpSocket.accept()  # Wait for the second Client to connect
+                self.teamTwoName = self.teamTwoSocket.recv(1024).decode(
+                    'UTF-8')  # receive the TeamName of the second Team
+                self.clientsConnected = self.clientsConnected + 1
+                print(yellowColor + "Second client connected..")
+                self.broadcastStopped = True
+                time.sleep(10)
 
     # Function to send the broadcastMsg via UDP transport
     def broadcastMsg(self):
