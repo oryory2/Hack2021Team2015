@@ -417,5 +417,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    server = Server(1255)
+    server = Server(random.randrange(5000,7000))
     server.acceptingClients()
