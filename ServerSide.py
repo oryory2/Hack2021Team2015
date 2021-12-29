@@ -5,6 +5,7 @@ import socket
 import sys
 from threading import Thread
 
+
 # Text colors
 blueColor = '\033[96m'  # blue
 yellowColor = '\033[92m'  # yellow
@@ -146,8 +147,8 @@ class Server:
             'UTF-8'))
 
         # Creating two Threads that will take answer from the two Clients
-        teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))  # החלפתי
-        teamTwoGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamTwoSocket, 2,))  # החלפתי
+        teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))
+        teamTwoGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamTwoSocket, 2,))
 
         teamOneGameThread.start()
         teamTwoGameThread.start()

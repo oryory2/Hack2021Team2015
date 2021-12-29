@@ -181,6 +181,6 @@ class Client:
 
 
 if __name__ == "__main__":
-    client = Client("two")
-    print("two")
+    client = Client("bio")
+    print("bio")
     client.searchForServer()
