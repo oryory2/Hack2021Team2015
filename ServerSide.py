@@ -3,7 +3,7 @@ from datetime import datetime
 import time
 import socket
 import sys
-import  struct
+import struct
 from threading import Thread
 from scapy.arch import get_if_addr, get_if_list
 
