@@ -76,7 +76,7 @@ class Server:
         if self.local:
             self.tcpSocket.bind((self.host, self.tPortNumber))
         else:
-            self.tcpSocket.bind((self.ip, 0)) ###############################################################
+            self.tcpSocket.bind((self.ip, tcpPort))
 
 
 

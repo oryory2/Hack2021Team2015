@@ -68,7 +68,10 @@ class Client:
         print(blueColor + msgFromServer.decode('UTF-8'))
 
         # Answer the math question
-        reads, _, _ = select.select([self.tcpSocket, sys.stdin], [], [])
+        try:
+            reads, _, _ = select.select([self.tcpSocket, sys.stdin], [], [])
+        except:
+            self.closeSocketsAndRestart()
         if sys.stdin in reads:
             # Current client answered first, Send the answer
             answer = sys.stdin.readline()[0]
