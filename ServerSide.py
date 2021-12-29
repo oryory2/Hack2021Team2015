@@ -92,30 +92,33 @@ class Server:
         broadcastThread = Thread(target=self.broadcastMsg)
         broadcastThread.start()
 
-        self.tcpSocket.settimeout(10)  # get exception after 10 seconds
+        try:
+            self.tcpSocket.settimeout(10)  # get exception after 10 seconds
 
-        # Wait for two Clients to connect the Server
-        while not self.broadcastStopped:
-            if self.clientsConnected == 0:
-                self.teamOneSocket, addressOne = self.tcpSocket.accept()  # Wait for the first Client to connect
-                self.teamOneName = self.teamOneSocket.recv(1024).decode(
-                    'UTF-8')  # receive the TeamName of the first Team
-                self.clientsConnected = self.clientsConnected + 1
-                print(yellowColor + "First client connected..")
-            elif self.clientsConnected == 1:
-                self.teamTwoSocket, addressTwo = self.tcpSocket.accept()  # Wait for the second Client to connect
-                self.teamTwoName = self.teamTwoSocket.recv(1024).decode(
-                    'UTF-8')  # receive the TeamName of the second Team
-                self.clientsConnected = self.clientsConnected + 1
-                print(yellowColor + "Second client connected..")
-            else:
-                try:
-                    clientToDeleteSocket, address = self.tcpSocket.accept()  # Wait for the first Client to connect
-                    clientToDeleteSocket.shutdown(socket.SHUT_RDWR)
-                    clientToDeleteSocket.close()
-                except:
-                    self.broadcastStopped = True
-                    break
+            # Wait for two Clients to connect the Server
+            while not self.broadcastStopped:
+                if self.clientsConnected == 0:
+                    self.teamOneSocket, addressOne = self.tcpSocket.accept()  # Wait for the first Client to connect
+                    self.teamOneName = self.teamOneSocket.recv(1024).decode(
+                        'UTF-8')  # receive the TeamName of the first Team
+                    self.clientsConnected = self.clientsConnected + 1
+                    print(yellowColor + "First client connected..")
+                elif self.clientsConnected == 1:
+                    self.teamTwoSocket, addressTwo = self.tcpSocket.accept()  # Wait for the second Client to connect
+                    self.teamTwoName = self.teamTwoSocket.recv(1024).decode(
+                        'UTF-8')  # receive the TeamName of the second Team
+                    self.clientsConnected = self.clientsConnected + 1
+                    print(yellowColor + "Second client connected..")
+                else:
+                    try:
+                        clientToDeleteSocket, address = self.tcpSocket.accept()  # Wait for the first Client to connect
+                        clientToDeleteSocket.shutdown(socket.SHUT_RDWR)
+                        clientToDeleteSocket.close()
+                    except:
+                        self.broadcastStopped = True
+                        break
+        except:
+            self.closeSocketsAndRestart()
 
         self.startTheGame()
 
