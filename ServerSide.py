@@ -307,15 +307,17 @@ class Server:
             print(failColor + "Both Teams disconnected, restarting Server..")
             self.closeSocketsAndRestart()
 
-        if oneDisconnected:
+        elif oneDisconnected:
             print(failColor + "Team " + str(self.teamOneName) + " has disconnected from the server, Team " + str(
                 self.teamTwoName) + " won the match")
-            self.closeSocketsAndRestart()
+            self.updateTeamsTable_win(self.teamTwoName, self.teamOneName)  # Update both Team points
+            self.closeSocketsAndRestart()  # update the points
 
-        if TwoDisconnected:
+        elif TwoDisconnected:
             print(failColor + "Team " + str(self.teamTwoName) + " has disconnected from the server, Team " + str(
                 self.teamOneName) + " won the match")
-            self.closeSocketsAndRestart()
+            self.updateTeamsTable_win(self.teamOneName, self.teamTwoName)  # Update both Team points
+            self.closeSocketsAndRestart()  # update the points
 
 
 

@@ -116,8 +116,11 @@ class Client:
             return
 
         # Sending the server the client name
-        self.tcpSocket.send(bytes(self.name, 'UTF-8'))
-        self.serverConnected = 1
+        try:
+            self.tcpSocket.send(bytes(self.name, 'UTF-8'))
+        except:
+            self.closeSocketsAndRestart()
+        self.serverConnected = 1  # Set the connection with the Server
 
     # Answer the math question
     def answerToServer(self):
@@ -181,6 +184,6 @@ class Client:
 
 
 if __name__ == "__main__":
-    client = Client("bio")
-    print("bio")
+    client = Client("3")
+    print("3")
     client.searchForServer()
