@@ -4,7 +4,7 @@ import time
 import socket
 import sys
 from threading import Thread
-
+from scapy.arch import get_if_addr, get_if_list
 
 # Text colors
 blueColor = '\033[96m'  # blue
@@ -34,6 +34,8 @@ class Server:
         self.messageType = 0x2
         self.clientsConnected = 0
 
+
+
         # Creating the broadcastMsg
         magicCookieInBytes = self.magicCookie.to_bytes(byteorder='big', length=4)
         messageTypeInBytes = self.messageType.to_bytes(byteorder='big', length=1)
@@ -50,11 +52,18 @@ class Server:
             print(failColor + "Failed to create server UDP socket")
             sys.exit()
 
-        try:
+        try:  # Hackathon lab
+            self.ip = get_if_addr("eth1")
+            self.local = False
+            splitedIp = self.ip.split('.')
+            splitedIp[len(splitedIp) - 1] = '255'
+            splitedIp[len(splitedIp) - 2] = '255'
+            self.subnetBroadcast = '.'.join(splitedIp)
+
+        except:  # no lab
+            self.local = True
             self.ip = socket.gethostbyname(socket.gethostname())
-        except:
-            print(failColor + "Hostname server couldn't be resolved")
-            sys.exit()
+
 
         # TCP Socket
         try:
@@ -64,7 +73,12 @@ class Server:
             sys.exit()
 
         # Bind the tcp socket with the server host/port
-        self.tcpSocket.bind((self.host, self.tPortNumber))
+        if self.local:
+            self.tcpSocket.bind((self.host, self.tPortNumber))
+        else:
+            self.tcpSocket.bind((self.ip, 0)) ###############################################################
+
+
 
 
 
@@ -112,7 +126,11 @@ class Server:
     # Function to send the broadcastMsg via UDP transport
     def broadcastMsg(self):
         while self.clientsConnected != 2:
-            self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))  # 2 first byres - subnet
+            if self.local:  # Run on windows
+                self.udpSocket.sendto(self.broadMsg, ('255.255.255.255', self.uPortNumber))  # 2 first byres - subnet
+
+            else:  # Run on linux
+                self.udpSocket.sendto(self.broadMsg, (self.subnetBroadcast, self.uPortNumber))  # 2 first byres - subnet
             time.sleep(1)  # Wait one second between messages
 
 
