@@ -1,5 +1,6 @@
 import select
 import socket
+import struct
 import sys
 
 
@@ -44,15 +45,16 @@ class Client:
         print(blueColor + "Client started, listening for offer requests...")
         while self.serverConnected < 1:
             msgFromServer, serverInfo = self.udpSocket.recvfrom(2048)  # wait for broadcast message from a Server
+            msgParts = struct.unpack("IbH", msgFromServer)
 
             # Extract the data from the ServerMsg
             self.serverIP = serverInfo[0]
-            magicCookie = hex(int(msgFromServer.hex()[:8], 16))
-            messageType = msgFromServer.hex()[9:10]
-            self.serverPort = int(msgFromServer.hex()[10:], 16)
+            magicCookie = msgParts[0]
+            messageType = msgParts[1]
+            self.serverPort = msgParts[2]
 
             # Verify all the different parameters from the Server
-            if hex(self.magicCookie) != magicCookie or self.messageType != int(messageType):
+            if self.magicCookie != magicCookie or self.messageType != messageType:
                 continue
             print(yellowColor + "Received offer from " + str(self.serverIP) + ", attempting to connect...\n")
             self.connectToServer()  # Try to connect to the specific Server

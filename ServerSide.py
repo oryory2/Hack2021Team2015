@@ -3,6 +3,7 @@ from datetime import datetime
 import time
 import socket
 import sys
+import  struct
 from threading import Thread
 from scapy.arch import get_if_addr, get_if_list
 
@@ -37,10 +38,7 @@ class Server:
 
 
         # Creating the broadcastMsg
-        magicCookieInBytes = self.magicCookie.to_bytes(byteorder='big', length=4)
-        messageTypeInBytes = self.messageType.to_bytes(byteorder='big', length=1)
-        tcpPortNumberInBytes = self.tPortNumber.to_bytes(byteorder='big', length=2)
-        self.broadMsg = magicCookieInBytes + messageTypeInBytes + tcpPortNumberInBytes
+        self.broadMsg = struct.pack("IbH", self.magicCookie, self.messageType, self.tPortNumber)
 
         # Initializing the different sockets
 
