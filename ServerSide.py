@@ -186,16 +186,19 @@ class Server:
             result = numOne - numTwo
 
         # Welcome the two Teams and ask the math question
-        self.teamOneSocket.sendall(bytes(
-            "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n""Teams: \n1. " + str(
-                self.teamOneName) + "\n2. " + str(
-                self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg,
-            'UTF-8'))
-        self.teamTwoSocket.sendall(bytes(
-            "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n""Teams: \n1. " + str(
-                self.teamOneName) + "\n2. " + str(
-                self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg,
-            'UTF-8'))
+        try:
+            self.teamOneSocket.sendall(bytes(
+                "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n""Teams: \n1. " + str(
+                    self.teamOneName) + "\n2. " + str(
+                    self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg,
+                'UTF-8'))
+            self.teamTwoSocket.sendall(bytes(
+                "Welcome to the tournament of BGU Quick Maths.. get ready, the game is going to begin shortly..\n""Teams: \n1. " + str(
+                    self.teamOneName) + "\n2. " + str(
+                    self.teamTwoName) + "\n ====== \nPlease answer the following question as fast as you can:\n" + mathMsg,
+                'UTF-8'))
+        except:
+            self.closeSocketsAndRestart()
 
         # Creating two Threads that will take answer from the two Clients
         teamOneGameThread = Thread(target=self.getAnswerFromTeam, args=(self.teamOneSocket, 1,))
@@ -280,23 +283,28 @@ class Server:
 
         print(blueColor + "Game Over!\nThe correct answer was " + str(
             result) + "!\nCongratulations to the winner: " + winnerTeam)
-        self.teamOneSocket.sendall(bytes(
-            "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(
-                winnerTeam), 'UTF-8'))
-        self.teamTwoSocket.sendall(bytes(
-            "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(
-                winnerTeam), 'UTF-8'))
-
+        try:
+            self.teamOneSocket.sendall(bytes(
+                "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(
+                    winnerTeam), 'UTF-8'))
+            self.teamTwoSocket.sendall(bytes(
+                "Game Over!\nThe correct answer was " + str(result) + "!\nCongratulations to the winner: " + str(
+                    winnerTeam), 'UTF-8'))
+        except:
+            self.closeSocketsAndRestart()
 
 
     def printResultDraw(self, result):  # Print the result of the match (Draw)
 
         print(blueColor + "Game Over!\nThe correct answer was " + str(
             result) + "!\nNone of the team answered on time, so there is a Draw!")
-        self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(
-            result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
-        self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(
-            result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
+        try:
+            self.teamOneSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(
+                result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
+            self.teamTwoSocket.sendall(bytes("Game Over!\nThe correct answer was " + str(
+                result) + "!\nNone of the team answered on time, so there is a Draw!", 'UTF-8'))
+        except:
+            self.closeSocketsAndRestart()
 
 
 
