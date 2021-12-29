@@ -135,8 +135,6 @@ class Server:
 
 
 
-
-
     # Function that runs after the two Clients connected to the Server
     def startTheGame(self):
 
