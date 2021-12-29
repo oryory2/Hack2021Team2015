@@ -47,7 +47,7 @@ class Client:
             msgFromServer, serverInfo = self.udpSocket.recvfrom(2048)  # wait for broadcast message from a Server
             msgParts = struct.unpack("IbH", msgFromServer)
 
-            # Extract the data from the ServerMsg
+            # Extract the data from the ServerMsgg
             self.serverIP = serverInfo[0]
             magicCookie = msgParts[0]
             messageType = msgParts[1]
